@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from modelhub import spike_slab
+from modelhub import tree_spike_slab
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
 parser.add_argument('--nLV', type=int, help='User specified nLV', default=32) # 4, 32, 128
@@ -27,7 +27,7 @@ parser.add_argument('--check_val_every_n_epoch', type=int,
 args = parser.parse_args()
 print(args)
 
-model_id = f"spike_slab_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"tree_spike_slab_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_klbeta{args.kl_weight_beta}_seed{args.seed}"
 print(model_id)
 #%%
 DataDIR = os.path.join(os.path.expanduser('~'), "projects/data")
@@ -40,7 +40,7 @@ now = datetime.datetime.now()
 logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
 model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-model = spike_slab(adata, n_latent = args.nLV, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta)
+model = tree_spike_slab(adata, n_latent = args.nLV, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta)
 
 seed_everything(args.seed, workers=True)
 #set deterministic=True for reproducibility
