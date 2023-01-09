@@ -842,3 +842,4 @@ class SimpleLogger(LightningLoggerBase):
     @property
     def name(self):
         return "SimpleLogger"
+
