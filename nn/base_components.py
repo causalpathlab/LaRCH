@@ -211,6 +211,7 @@ class BeyesianETMEncoder(nn.Module):
         n_layers_individual: int = 3,
         use_batch_norm: bool = True,
         log_variational: bool = True,
+        
     ):
         super().__init__()
         self.log_variational = log_variational
@@ -255,20 +256,20 @@ class TreeDecoder(nn.Module):
         super().__init__()
         self.n_input = n_input # topics
         self.n_output = n_output # genes
-        
+        self.tree_depth = tree_depth # tree depth
         # adjaency matrix for binay tree
-        self.A <- nn.Parameter(tree_util.pbt_adj(tree_depth).to_dense(),requires_grad = False)
+        self.A <- nn.Parameter(tree_util.pbt_adj(self.tree_depthtree_depth).to_dense(),requires_grad = False)
         ## dimensions
-        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(tree_depth)
+        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
         self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
-        # for shared effect（rho）
+        ## hyper-parameters
         self.logit_0 = nn.Parameter(torch.logit(torch.ones(1)* pip0, eps=1e-6), requires_grad = False)
         self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
+        ## model parameters
         self.slab_mean = nn.Parameter(torch.randn(n_input, n_output) * torch.sqrt(torch.ones(1) * v0))
         self.slab_lnvar = nn.Parameter(torch.ones(n_input, n_output) * torch.log(torch.ones(1) * v0))
         self.spike_logit = nn.Parameter(torch.zeros(n_input, n_output) * self.logit_0)
-
-        # Log softmax operations
+        # helper functions
         self.log_softmax = nn.LogSoftmax(dim=-1)
     
     
@@ -278,13 +279,12 @@ class TreeDecoder(nn.Module):
     ):
         theta = self.soft_max(z)
         rho = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
+        beta = torch.mm(self.A, self.safe_exp(rho))
+        aa = torch.mm(theta, beta)
+        
         rho_kl = self.sparse_kl_loss(self.logit_0, self.lnvar_0, self.spike_logit, self.slab_mean, self.slab_lnvar)
         
-        h = self.soft_max(z)
-        beta = torch.mm(self.A, self.safe_exp(rho))
-        beta = torch.mm(h, beta)
-        
-        return rho, rho_kl, theta, beta
+        return rho, rho_kl, theta, beta, aa
     
     def get_rho(
         self,

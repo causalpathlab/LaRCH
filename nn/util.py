@@ -165,10 +165,7 @@ def _register_anndata(adata, data_registry_dict: Dict[str, Tuple[str, str]]):
 
 def setup_anndata(
     adata: anndata.AnnData,
-    batch_key: Optional[str] = None,
     layer: Optional[str] = None,
-    unspliced_obsm_key: Optional[str] = None,
-    unspliced_names_uns_key: Optional[str] = None,
     copy: bool = False,
 ) -> Optional[anndata.AnnData]:
 
@@ -184,17 +181,8 @@ def setup_anndata(
     x_loc, x_key = _setup_x(adata, layer)
 
     data_registry = {
-        _CONSTANTS.X_KEY: {"attr_name": x_loc, "attr_key": x_key},
+        "X": {"attr_name": x_loc, "attr_key": x_key},
     }
-
-    if unspliced_obsm_key is not None:
-        unspliced_obsm_key = _setup_unspliced_expression(
-            adata, unspliced_obsm_key, unspliced_names_uns_key, batch_key
-        )
-        data_registry[_CONSTANTS.UNSPLICED_EXP_KEY] = {
-            "attr_name": "obsm",
-            "attr_key": unspliced_obsm_key,
-        }
 
     # add the data_registry to anndata
     _register_anndata(adata, data_registry_dict=data_registry)
@@ -204,10 +192,6 @@ def setup_anndata(
 
     if copy:
         return adata
-    
-class _CONSTANTS:
-    X_KEY = "X"
-    UNSPLICED_EXP_KEY = "unspliced_expression"
     
 class BaseModelClass(ABC):
     """Abstract class for deltaTopic models."""
