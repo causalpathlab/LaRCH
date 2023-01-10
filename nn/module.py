@@ -17,7 +17,7 @@ class tree_spike_slab_module(BaseModuleClass):
     def __init__(
         self,
         n_genes: int,
-        n_latent: int = 32,
+        #n_latent: int = 32,
         tree_depth: int = 3, 
         n_layers_encoder_individual: int = 2,
         dim_hidden_encoder: int = 128,
@@ -28,7 +28,7 @@ class tree_spike_slab_module(BaseModuleClass):
         super().__init__()
 
         self.n_input = n_genes
-        self.n_latent = n_latent
+        self.n_latent = 2**(tree_depth-1)
         self.log_variational = log_variational
         self.pip0_rho = pip0_rho
         self.kl_weight_beta = kl_weight_beta
@@ -42,8 +42,7 @@ class tree_spike_slab_module(BaseModuleClass):
             log_variational = self.log_variational,    
         )
 
-        self.decoder = TreeDecoder(self.n_latent , 
-                                   self.n_input, 
+        self.decoder = TreeDecoder(self.n_input, # n_genes
                                    pip0 = self.pip0_rho,
                                    tree_depth=self.tree_depth
                                 )
@@ -92,6 +91,22 @@ class tree_spike_slab_module(BaseModuleClass):
 
         rho, rho_kl, theta, beta, aa  = self.decoder(z)
         return dict(rho = rho, rho_kl = rho_kl, theta = theta, beta = beta, aa = aa)
+    
+    def sample_from_posterior_z(
+        self, 
+        x: torch.Tensor,
+        deterministic: bool = True,
+        output_softmax_z: bool = True, 
+    ):
+        inference_out = self.inference(x)
+        if deterministic:
+            z = inference_out["qz_m"]
+        else:
+            z = inference_out["z"]
+        if output_softmax_z:
+            generative_outputs = self.generative(z)
+            z = generative_outputs["theta"]      
+        return dict(z=z)
     
     @auto_move_data
     def get_reconstruction_loss(

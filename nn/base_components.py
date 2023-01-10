@@ -5,8 +5,7 @@ from typing import Iterable
 import torch
 from torch import nn as nn
 from torch.distributions import Normal
-import torch.nn.functional as F
-import pbt_util as tree_util
+import nn.pbt_util as tree_util
 torch.backends.cudnn.benchmark = True
 
 def identity(x):
@@ -247,28 +246,28 @@ class TreeDecoder(nn.Module):
     """
     def __init__(
         self,
-        n_input: int,
+        #n_input: int,
         n_output: int,
         pip0 = 0.1,
         v0 = 1,
         tree_depth = 3,
     ):
         super().__init__()
-        self.n_input = n_input # topics
+        
+        ## dimensions
         self.n_output = n_output # genes
         self.tree_depth = tree_depth # tree depth
-        # adjaency matrix for binay tree
-        self.A <- nn.Parameter(tree_util.pbt_adj(self.tree_depthtree_depth).to_dense(),requires_grad = False)
-        ## dimensions
         self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
         self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
+        # adjaency matrix for binay tree
+        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
         ## hyper-parameters
         self.logit_0 = nn.Parameter(torch.logit(torch.ones(1)* pip0, eps=1e-6), requires_grad = False)
         self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
         ## model parameters
-        self.slab_mean = nn.Parameter(torch.randn(n_input, n_output) * torch.sqrt(torch.ones(1) * v0))
-        self.slab_lnvar = nn.Parameter(torch.ones(n_input, n_output) * torch.log(torch.ones(1) * v0))
-        self.spike_logit = nn.Parameter(torch.zeros(n_input, n_output) * self.logit_0)
+        self.slab_mean = nn.Parameter(torch.randn(self.num_tree_nodes, n_output) * torch.sqrt(torch.ones(1) * v0))
+        self.slab_lnvar = nn.Parameter(torch.ones(self.num_tree_nodes, n_output) * torch.log(torch.ones(1) * v0))
+        self.spike_logit = nn.Parameter(torch.zeros(self.num_tree_nodes, n_output) * self.logit_0)
         # helper functions
         self.log_softmax = nn.LogSoftmax(dim=-1)
     
@@ -307,7 +306,7 @@ class TreeDecoder(nn.Module):
         return mean + eps * torch.sqrt(var)
     
     def safe_exp(self, x, x_min = -10, x_max = 10):
-        torch.exp(torch.clamp(x, x_min, x_max))
+        return torch.exp(torch.clamp(x, x_min, x_max))
     
     def soft_max(self, 
                  z: torch.Tensor,

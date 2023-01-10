@@ -10,9 +10,9 @@ from pytorch_lightning import seed_everything
 from modelhub import tree_spike_slab
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
-parser.add_argument('--nLV', type=int, help='User specified nLV', default=32) # 4, 32, 128
+parser.add_argument('--tree_depth', type=int, help='tree depth', default=5) # 4, 32, 128
 parser.add_argument('--pip0', type=float, help='pip0', default=0.1) # 1e-3, 1e-2, 1e-1, 1
-parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=1000) # 1000
+parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=2000) # 1000
 parser.add_argument('--lr', type=float, help='learning_rate', default=1e-2) # 0.01
 parser.add_argument('--bs', type=int, help='Batch size', default=128) # 128
 parser.add_argument('--kl_weight_beta', type=float, 
@@ -27,11 +27,10 @@ parser.add_argument('--check_val_every_n_epoch', type=int,
 args = parser.parse_args()
 print(args)
 
-model_id = f"tree_spike_slab_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"tree_spike_slab_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_klbeta{args.kl_weight_beta}_seed{args.seed}"
 print(model_id)
 #%%
-DataDIR = os.path.join(os.path.expanduser('~'), "projects/data")
-adata = sc.read(os.path.join(DataDIR,'CRA001160/final_CRA001160_spliced_allgenes.h5ad'))
+adata = sc.read('data/sim_tree.h5ad')
 adata.layers["counts"] = csr_matrix(adata.X).copy()
 setup_anndata(adata, layer="counts")
 
@@ -40,7 +39,7 @@ now = datetime.datetime.now()
 logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
 model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-model = tree_spike_slab(adata, n_latent = args.nLV, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta)
+model = tree_spike_slab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta)
 
 seed_everything(args.seed, workers=True)
 #set deterministic=True for reproducibility

@@ -1,17 +1,17 @@
 #######################################################
 ## helper functions related to a perfect binary tree ##
 #######################################################
-import numpy as torch
+import numpy as np
 import torch
 
 #' @param N total number of tree nodes
 #' @return tree depth
 def num_pbt_nodes(kk):
-    tree_depth = torch.ceil(torch.log2(kk)) + 1
-    return 2**tree_depth - 1 # number of tree nodes
+    tree_depth = np.ceil(np.log2(kk)) + 1
+    return (2**tree_depth - 1).astype(int) # number of tree nodes
 
 def pbt_nodes_to_depth(N):
-    return torch.log2(N + 1)
+    return (np.log2(N + 1)).astype(int)
 
 #' @param D tree depth
 def pbt_depth_to_leaves(D):

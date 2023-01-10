@@ -10,7 +10,7 @@ from nn.module import tree_spike_slab_module
 
 logger = logging.getLogger(__name__)
 
-def _unpack_tensors_BETM(tensors):
+def _unpack_tensors(tensors):
     x = tensors["X"].squeeze_(0)
     return x
 
@@ -23,8 +23,6 @@ class tree_spike_slab(BaseModelClass):
     adata_seq
         Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
         and contains data.
-    n_latent
-        Dimensionality of the latent space.
     tree_depth
         depth of the tree    
     **model_kwargs
@@ -37,24 +35,22 @@ class tree_spike_slab(BaseModelClass):
     def __init__(
         self,
         adata_seq: AnnData,
-        n_latent: int = 32,
         tree_depth: int = 3,
         **model_kwargs,
     ):
         super(tree_spike_slab, self).__init__()
-        self.n_latent = n_latent
         self.adata = adata_seq
         self.tree_depth = tree_depth
         self.module = tree_spike_slab_module(
             n_genes = self.adata.n_vars,
-            n_latent=n_latent,
+            #n_latent=n_latent,
             tree_depth = self.tree_depth,
             **model_kwargs,
         )
         
         self._model_summary_string = (
-            "tree_spike_slab with the following params: \nn_latent: {},  n_genes: {}, tree_depth: {}"
-        ).format(n_latent, self.adata.n_vars, self.tree_depth)
+            "tree_spike_slab with the following params:  n_genes: {}, tree_depth: {}"
+        ).format(self.adata.n_vars, self.tree_depth)
            
     def train(
         self,
@@ -169,7 +165,7 @@ class tree_spike_slab(BaseModelClass):
         for tensors in scdl:
             (
                 sample_batch
-            ) = _unpack_tensors_BETM(tensors)
+            ) = _unpack_tensors(tensors)
             z_dict  = self.module.sample_from_posterior_z(sample_batch, deterministic=deterministic, output_softmax_z=output_softmax_z)
             latent_z.append(z_dict["z"])                
 
@@ -208,10 +204,6 @@ class tree_spike_slab(BaseModelClass):
                 save_dir,"model_parameters", "slab_lnvar_rho.txt"
             ), decoder.slab_lnvar.cpu().numpy())
         
- 
-        np.savetxt(os.path.join(
-                save_dir,"model_parameters", "bias_gene.txt"
-            ), decoder.bias_d.cpu().numpy())
                 
     def save(
         self,
