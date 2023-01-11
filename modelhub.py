@@ -6,7 +6,7 @@ import numpy as np
 from anndata import AnnData
 from nn.util import DataSplitter, TrainRunner, BaseModelClass
 from nn.TrainingPlan import TrainingPlan
-from nn.module import tree_spike_slab_module
+from nn.module import tree_spike_slab_module, spike_slab_module
 
 logger = logging.getLogger(__name__)
 
@@ -255,3 +255,41 @@ class tree_spike_slab(BaseModelClass):
         model_save_path = os.path.join(dir_path, "model_params.pt")
 
         torch.save(self.module.state_dict(), model_save_path)
+
+
+class spike_slab(tree_spike_slab):
+    """
+    spike slab model
+
+    Parameters
+    ----------
+    adata_seq
+        Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
+        and contains data.
+    tree_depth
+        depth of the tree    
+    **model_kwargs
+        Keyword args for :class:`~module.DeltaETM_module`
+
+    Examples
+    --------
+    """
+
+    def __init__(
+        self,
+        adata_seq: AnnData,
+        n_latent: int = 16,
+        **model_kwargs,
+    ):
+        super(spike_slab, self).__init__()
+        self.adata = adata_seq
+        self.module = spike_slab_module(
+            n_genes = self.adata.n_vars,
+            n_latent=n_latent,
+            **model_kwargs,
+        )
+        
+        self._model_summary_string = (
+            "spike_slab with the following params:  n_genes: {}, n_latent: {}"
+        ).format(self.adata.n_vars, n_latent)
+           

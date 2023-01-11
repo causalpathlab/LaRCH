@@ -5,7 +5,7 @@ import torch
 from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
 from nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
-from nn.base_components import BeyesianETMEncoder, TreeDecoder
+from nn.base_components import BeyesianETMEncoder, TreeDecoder, SpikeSlabDecoder
 
 torch.backends.cudnn.benchmark = True
 
@@ -202,3 +202,41 @@ class tree_spike_slab_module(BaseModuleClass):
                             kl_beta = kl_divergence_beta, 
                             kl_rho = rho_kl, 
                             kl_delta = torch.Tensor(0)) 
+
+class spike_slab_module(tree_spike_slab_module):
+    """
+    spike slab
+    """
+
+    def __init__(
+        self,
+        n_genes: int,
+        n_latent: int = 16,
+        n_layers_encoder_individual: int = 2,
+        dim_hidden_encoder: int = 128,
+        log_variational: bool = True,
+        pip0_rho: float = 0.1,
+        kl_weight: float = 1.0,
+        kl_weight_beta: float = 1.0,        
+    ):
+        super().__init__()
+        
+        self.n_latent = n_latent
+        self.n_input = n_genes
+        self.log_variational = log_variational
+        self.pip0_rho = pip0_rho
+        self.kl_weight = kl_weight
+        self.kl_weight_beta = kl_weight_beta 
+        
+        self.z_encoder = BeyesianETMEncoder(
+            n_input=self.n_input,
+            n_output=self.n_latent,
+            n_hidden=dim_hidden_encoder,
+            n_layers_individual=n_layers_encoder_individual,
+            log_variational = self.log_variational,    
+        )
+
+        self.decoder = SpikeSlabDecoder(self.n_latent, # n_topics
+                                        self.n_input, # n_genes
+                                        pip0 = self.pip0_rho
+                                        )

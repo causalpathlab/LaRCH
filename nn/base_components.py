@@ -336,3 +336,42 @@ class TreeDecoder(nn.Module):
         ## Combine both logit and Gaussian KL
         return torch.sum(kl_pip + pip_hat * kl_g) # return a number sum over [N_topics, N_genes]
            
+class SpikeSlabDecoder(TreeDecoder):
+    """
+    Decoder for spike slab
+    """
+    def __init__(
+        self,
+        n_input: int,
+        n_output: int,
+        pip0 = 0.1,
+        v0 = 1,
+    ):
+        super().__init__()
+        
+        ## dimensions
+        self.n_output = n_output # genes
+        self.n_input = n_input # topics
+        ## hyper-parameters
+        self.logit_0 = nn.Parameter(torch.logit(torch.ones(1)* pip0, eps=1e-6), requires_grad = False)
+        self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
+        ## model parameters
+        self.slab_mean = nn.Parameter(torch.randn(n_input, n_output) * torch.sqrt(torch.ones(1) * v0))
+        self.slab_lnvar = nn.Parameter(torch.ones(n_input, n_output) * torch.log(torch.ones(1) * v0))
+        self.spike_logit = nn.Parameter(torch.zeros(n_input, n_output) * self.logit_0)
+        # helper functions
+        self.log_softmax = nn.LogSoftmax(dim=-1)
+    
+    def forward(
+        self,
+        z: torch.Tensor,
+    ):
+        theta = self.soft_max(z)
+        rho = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
+        beta = self.safe_exp(rho)
+        aa = torch.mm(theta, beta)
+        
+        rho_kl = self.sparse_kl_loss(self.logit_0, self.lnvar_0, self.spike_logit, self.slab_mean, self.slab_lnvar)
+        
+        return rho, rho_kl, theta, beta, aa
+    
