@@ -15,6 +15,8 @@ parser.add_argument('--pip0', type=float, help='pip0', default=0.1) # 1e-3, 1e-2
 parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=2000) # 1000
 parser.add_argument('--lr', type=float, help='learning_rate', default=1e-2) # 0.01
 parser.add_argument('--bs', type=int, help='Batch size', default=128) # 128
+parser.add_argument('--kl_weight', type=float, 
+                    help='weight for kl local term', default=1) # 1
 parser.add_argument('--kl_weight_beta', type=float, 
                     help='weight for global parameter beta in the kl term', default=1) # 1
 parser.add_argument('--train_size', type=float, 
@@ -27,7 +29,7 @@ parser.add_argument('--check_val_every_n_epoch', type=int,
 args = parser.parse_args()
 print(args)
 
-model_id = f"tree_spike_slab_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"tree_spike_slab_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
 print(model_id)
 #%%
 adata = sc.read('data/sim_tree.h5ad')
@@ -39,7 +41,7 @@ now = datetime.datetime.now()
 logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
 model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-model = tree_spike_slab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta)
+model = tree_spike_slab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
 
 seed_everything(args.seed, workers=True)
 #set deterministic=True for reproducibility

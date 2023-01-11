@@ -23,6 +23,7 @@ class tree_spike_slab_module(BaseModuleClass):
         dim_hidden_encoder: int = 128,
         log_variational: bool = True,
         pip0_rho: float = 0.1,
+        kl_weight: float = 1.0,
         kl_weight_beta: float = 1.0,        
     ):
         super().__init__()
@@ -31,6 +32,7 @@ class tree_spike_slab_module(BaseModuleClass):
         self.n_latent = 2**(tree_depth-1)
         self.log_variational = log_variational
         self.pip0_rho = pip0_rho
+        self.kl_weight = kl_weight
         self.kl_weight_beta = kl_weight_beta
         self.tree_depth = tree_depth    
         
@@ -173,6 +175,7 @@ class tree_spike_slab_module(BaseModuleClass):
 
         """
         kl_weight_beta = self.kl_weight_beta
+        kl_weight = self.kl_weight
         x = tensors["X"]
         qz_m = inference_outputs["qz_m"]
         qz_v = inference_outputs["qz_v"]
