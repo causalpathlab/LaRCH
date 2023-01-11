@@ -176,3 +176,32 @@ apply(topics_est, 1, which.max) %>% table() %>% kable()
 heatmap(topics_est)
 ```
 
+### pip 0.01 kl 0.1
+```{r ill3}
+model_path <-"models/tree_spike_slab_ep2000_treeD5_bs128_lr0.01_train_size1_pip0.01_kl0.1_klbeta1_seed66"
+
+topics_est <- as.matrix(fread(paste0(model_path, "/topics.csv")), rownames = 1)
+
+apply(topics_est, 1, which.max) %>% table() %>% kable()
+heatmap(topics_est)
+```
+
+### Early Stopping at 200 EPOCH, pip 0.1 kl 0.1
+```{r ill4}
+model_path <-"models/tree_spike_slab_ep200_treeD5_bs128_lr0.01_train_size1_pip0.1_kl0.1_klbeta1_seed66"
+
+topics_est <- as.matrix(fread(paste0(model_path, "/topics.csv")), rownames = 1)
+
+apply(topics_est, 1, which.max) %>% table() %>% kable()
+heatmap(topics_est)
+```
+
+### 2000 EPOCH  pip 0.1 kl 0.1
+```{r ill5}
+model_path <-"models/tree_spike_slab_ep2000_treeD5_bs128_lr0.01_train_size1_pip0.1_kl0.1_klbeta1_seed66"
+
+topics_est <- as.matrix(fread(paste0(model_path, "/topics.csv")), rownames = 1)
+
+apply(topics_est, 1, which.max) %>% table() %>% kable()
+heatmap(topics_est)
+```
