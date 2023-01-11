@@ -49,7 +49,7 @@ pbt.adj <- function(D, .signed = FALSE) {
 #' @param G #genes
 #' @param g #anchor genes
 #' @param D_tree tree depth
-#' @param gamma0 
+#' @param gamma0
 #' @param alpha0
 #' @param data.file
 #' @return list X (#cell x #genes), anchor_gene_idx, A (tree adjacency matrix) 
@@ -71,7 +71,7 @@ sim_data <- function(N, G, g, D_tree, data.file, gamma0 = 50, alpha0 = 5){
   # Aggregate tree-node-specific topics to construct beta
   beta <- A %*% (beta_node * pi)
   # Sample topic proportions from Dirichlet
-  #alpha0 <- 5
+  # alpha0 <- 5
   theta <- rdirichlet(n = N, alpha = alpha0 * rep(1/T, T))
   # Aggregate topic-specific gene activities
   rho <- theta %*% beta
@@ -87,8 +87,16 @@ sim_data <- function(N, G, g, D_tree, data.file, gamma0 = 50, alpha0 = 5){
   for(j in g){
     X[,anchor_gene_idx[j]] <- X_anchor_gene[,j] 
   }
-  
-  res <- list(X = X, anchor_gene_idx = anchor_gene_idx, A = A)
+  # parameters
+  param_list <- list(N = N, G = G, g = g,
+                    D_tree = D_tree,
+                    gamma0 = gamma0, 
+                    alpha0 = alpha0)
+
+  res <- list(X = X, X_anchor_gene = X_anchor_gene, A = A,
+              anchor_gene_idx = anchor_gene_idx,
+              theta = theta, beta = beta, rho = rho, D = D,
+              param_list = param_list)
   saveRDS(res, data.file)
   return(res)
 }
