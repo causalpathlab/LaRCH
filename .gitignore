@@ -131,3 +131,5 @@ dmypy.json
 logs/
 models/*
 !models/tree_spike_slab_ep2000_treeD5_bs128_lr0.01_train_size1_pip1.0_kl0.1_klbeta1_seed66/
+.DS_Store
+.Rhistory
