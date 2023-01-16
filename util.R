@@ -44,57 +44,67 @@ pbt.adj <- function(D, .signed = FALSE) {
                  x = .elem)
 }
 
+
 #' Simulate three based data
 #' @param N #cells
 #' @param G #genes
-#' @param g #anchor genes
+#' @param S #anchor genes per node
 #' @param D_tree tree depth
 #' @param gamma0
 #' @param alpha0
 #' @param data.file
 #' @return list X (#cell x #genes), anchor_gene_idx, A (tree adjacency matrix) 
 
-sim_data <- function(N, G, g, D_tree, data.file, gamma0 = 50, alpha0 = 5){
+sim_data <- function(N, G, S, D_tree, data.file, gamma0 = 500, alpha0 = 5){
   
   if(file.exists(data.file)){
     return(readRDS(data.file))
   }
+  
   # Construct adjacency matrix for tree with depth of Tr
   A <- pbt.adj(D_tree)
   dim(A)[1] -> T #leaves/topics 
   dim(A)[2] -> Tr #tree nodes
+
   # Sample gene selection probability vector \pi_{jg} from Dirichlet
-  #gamma0 <- 50
-  pi <- rdirichlet(n=Tr, alpha=gamma0 * rep(1/g, g))
+  #gamma0 <- 500
+  sample_name <- paste0("s", 1:N)
+  gene_name <- paste0("g", 1:G)
+  node_name <- paste0("tr", 1:Tr)
+  topic_name <- paste0("t", 1:T)
+  rownames(A) <- topic_name; colnames(A) <- node_name
+  X <- matrix(0, nrow = N, ncol = G); rownames(X) <- sample_name; colnames(X) <- gene_name
+  pi <- matrix(0,nrow = Tr, ncol = G); rownames(pi) <- node_name; colnames(pi) <- gene_name
+  #node X gene
+  anchor_gene_mat <- matrix(0,nrow = Tr, ncol = G) #node X gene, 0/1
+  rownames(anchor_gene_mat) <- node_name; colnames(anchor_gene_mat) <- gene_name
+  
+  for(k in 1:Tr){
+    pi_anchor <- rdirichlet(n=1, alpha=gamma0 * rep(1/S, S))
+    anchor_gene_idx <- sample(G, S, replace=FALSE)
+    anchor_gene_mat[k, anchor_gene_idx] <-1 
+    pi[k, anchor_gene_idx] <- pi_anchor
+  }
+
   # Sample node-specific effect size (positive)
-  beta_node <- rgamma(n=Tr, shape=1)
+  beta_node <- runif(Tr)
   # Aggregate tree-node-specific topics to construct beta
-  beta <- A %*% (beta_node * pi)
+  beta <- A %*% (beta_node * pi) #topic X gene
   # Sample topic proportions from Dirichlet
   # alpha0 <- 5
   theta <- rdirichlet(n = N, alpha = alpha0 * rep(1/T, T))
   # Aggregate topic-specific gene activities
   rho <- theta %*% beta
   # Sample X from multinomial
-  D <- rbeta(N, 1,1) # sequencing depth
-  X_anchor_gene <- matrix(0, nrow=N, ncol=g)
+  D <- runif(N) # sequencing depth
   for(i in 1:N){   
-    X_anchor_gene[i,] <- rmultinom(1, g, D[i] *  softmax(rho[i,]))
+    X[i,] <- rmultinom(1, G, D[i] *  softmax(rho[i,]))
   }
-  # Assign the anchor genes to X
-  X <- matrix(0, nrow=N, ncol=G)
-  anchor_gene_idx <- sample(G, g, replace=FALSE)
-  for(j in g){
-    X[,anchor_gene_idx[j]] <- X_anchor_gene[,j] 
-  }
-  # parameters
-  param_list <- list(N = N, G = G, g = g,
-                    D_tree = D_tree,
-                    gamma0 = gamma0, 
-                    alpha0 = alpha0)
-
-  res <- list(X = X, X_anchor_gene = X_anchor_gene, A = A,
-              anchor_gene_idx = anchor_gene_idx,
+  param_list <- list(N = N, G = G, S = S,
+                     D_tree = D_tree,
+                     gamma0 = gamma0, 
+                     alpha0 = alpha0)
+  res <- list(X = X, A = A, anchor_gene_mat = anchor_gene_mat,
               theta = theta, beta = beta, rho = rho, D = D,
               param_list = param_list)
   saveRDS(res, data.file)

@@ -5,14 +5,14 @@ seed <- 123
 set.seed(seed)
 
 N <- 5000
-G <- g <- 1000
+G <- 1000 
+S <- 200
 D_tree <- 5
-dat <- sim_data(N, G, g, D_tree, "data/sim_tree.rda")
+dat <- sim_data(N, G, S, D_tree, "data/sim_tree.rda")
 
 ## output a h5ad
-##TODO change dataloader for online trainning
 ad <- AnnData(X = dat$X_anchor_gene,
-              obs = data.frame(sample_id = paste0("cell", 1:nrow(dat$X))),
-              var = data.frame(gene = paste0("gene", 1:ncol(dat$X))))
+              obs = data.frame(sample_id = rownames(dat$X)),
+              var = data.frame(gene = colnames(dat$X)))
 
 ad$write_h5ad(filename = "data/sim_tree.h5ad")
