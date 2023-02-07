@@ -76,36 +76,45 @@ sim_data <- function(N, G, S, D_tree, data.file, gamma0 = 500, alpha0 = 5){
   X <- matrix(0, nrow = N, ncol = G); rownames(X) <- sample_name; colnames(X) <- gene_name
   pi <- matrix(0,nrow = Tr, ncol = G); rownames(pi) <- node_name; colnames(pi) <- gene_name
   #node X gene
-  anchor_gene_mat <- matrix(0,nrow = Tr, ncol = G) #node X gene, 0/1
+  anchor_gene_mat <- matrix(0, nrow = Tr, ncol = G) #node X gene, 0/1
   rownames(anchor_gene_mat) <- node_name; colnames(anchor_gene_mat) <- gene_name
   
   for(k in 1:Tr){
+    ## TODO: more schewed to make life easier
     pi_anchor <- rdirichlet(n=1, alpha=gamma0 * rep(1/S, S))
     anchor_gene_idx <- sample(G, S, replace=FALSE)
-    anchor_gene_mat[k, anchor_gene_idx] <-1 
+    anchor_gene_mat[k, anchor_gene_idx] <- 1
     pi[k, anchor_gene_idx] <- pi_anchor
   }
 
-  # Sample node-specific effect size (positive)
-  beta_node <- runif(Tr)
+  # Sample node-specific effect size (take positive for simplicity)
+  ## TODO: add some node-level bias
+  node_effect <- runif(Tr)
   # Aggregate tree-node-specific topics to construct beta
-  beta <- A %*% (beta_node * pi) #topic X gene
+  beta <- A %*% (node_effect * pi) #topic X gene
   # Sample topic proportions from Dirichlet
-  # alpha0 <- 5
-  theta <- rdirichlet(n = N, alpha = alpha0 * rep(1/T, T))
+  ## TODO: more schewed to make life easier
+  theta <- rdirichlet(n = N, alpha = alpha0 * softmax(rnorm(T)))
   # Aggregate topic-specific gene activities
-  rho <- theta %*% beta
+  rho_raw <- theta %*% beta
+  rho <- apply(rho_raw, 1, softmax)
+  rho <- t(rho)
   # Sample X from multinomial
-  D <- runif(N) # sequencing depth
-  for(i in 1:N){   
-    X[i,] <- rmultinom(1, G, D[i] *  softmax(rho[i,]))
+  D <- exp(rnorm(N)) # sequencing depth from log-normal(0,1)
+  for(i in 1:N){
+    X[i,] <- rmultinom(1, round(D[i] * G), rho[i,])
   }
   param_list <- list(N = N, G = G, S = S,
                      D_tree = D_tree,
-                     gamma0 = gamma0, 
+                     gamma0 = gamma0,
                      alpha0 = alpha0)
+
   res <- list(X = X, A = A, anchor_gene_mat = anchor_gene_mat,
-              theta = theta, beta = beta, rho = rho, D = D,
+              theta = theta, 
+              beta_node = pi, beta_topic = beta, 
+              node_effect = node_effect,
+              rho = rho, rho_raw = rho_raw,
+              sequence_depth = D,
               param_list = param_list)
   saveRDS(res, data.file)
   return(res)
