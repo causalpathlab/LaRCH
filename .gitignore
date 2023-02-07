@@ -137,7 +137,7 @@ run_train.sh
 models/archived_230116/
 models/archvied_230205/
 models/230205/
-models/230206/
-
+models/230206/*
+!models/230206/20230206_report.html
 models/230206_more_genes/*
 !models/230206_more_genes/20230206_report.html
