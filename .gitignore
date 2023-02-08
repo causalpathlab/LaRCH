@@ -127,3 +127,17 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+logs/
+
+#!models/tree_spike_slab_ep2000_treeD5_bs128_lr0.01_train_size1_pip1.0_kl0.1_klbeta1_seed66/
+.DS_Store
+.Rhistory
+run_train.sh
+models/archived_230116/
+models/archvied_230205/
+models/230205/
+models/230206/*
+!models/230206/20230206_report.html
+models/230206_more_genes/*
+!models/230206_more_genes/20230206_report.html
