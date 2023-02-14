@@ -80,7 +80,6 @@ sim_data <- function(N, G, S, D_tree, data.file, gamma0 = 500, alpha0 = 5){
   rownames(anchor_gene_mat) <- node_name; colnames(anchor_gene_mat) <- gene_name
   
   for(k in 1:Tr){
-    ## TODO: more schewed to make life easier
     pi_anchor <- rdirichlet(n=1, alpha=gamma0 * rep(1/S, S))
     anchor_gene_idx <- sample(G, S, replace=FALSE)
     anchor_gene_mat[k, anchor_gene_idx] <- 1
@@ -88,12 +87,14 @@ sim_data <- function(N, G, S, D_tree, data.file, gamma0 = 500, alpha0 = 5){
   }
 
   # Sample node-specific effect size (take positive for simplicity)
-  ## TODO: add some node-level bias
-  node_effect <- runif(Tr)
+  ## Normal(0, sd = layer * 0.5) + Normal(0, sd = 1), SNR increases with depth
+  node_effect <- c()
+  for(layer in 1:D_tree){
+    node_effect[2^(layer-1):(2^layer-1)] <- rnorm(2^(layer-1), mean = 0, sd = layer * 0.5) + rnorm(2^(layer-1), mean = 0, sd = 1)
+  }
   # Aggregate tree-node-specific topics to construct beta
   beta <- A %*% (node_effect * pi) #topic X gene
   # Sample topic proportions from Dirichlet
-  ## TODO: more schewed to make life easier
   theta <- rdirichlet(n = N, alpha = alpha0 * softmax(rnorm(T)))
   # Aggregate topic-specific gene activities
   rho_raw <- theta %*% beta
@@ -110,7 +111,7 @@ sim_data <- function(N, G, S, D_tree, data.file, gamma0 = 500, alpha0 = 5){
                      alpha0 = alpha0)
 
   res <- list(X = X, A = A, anchor_gene_mat = anchor_gene_mat,
-              theta = theta, 
+              theta = theta,
               beta_node = pi, beta_topic = beta, 
               node_effect = node_effect,
               rho = rho, rho_raw = rho_raw,
