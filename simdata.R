@@ -5,9 +5,9 @@ seed <- 123
 set.seed(seed)
 
 N <- 5000
-G <- 1000
-S <- 20
-D_tree <- 5
+G <- 10000
+S <- 50
+D_tree <- 4 # 5
 dat <- sim_data(N, G, S, D_tree, "data/sim_tree.rda")
 
 ## output a h5ad
