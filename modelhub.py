@@ -283,13 +283,14 @@ class spike_slab(tree_spike_slab):
     ):
         super(spike_slab, self).__init__()
         self.adata = adata_seq
+        self.n_latent = n_latent
         self.module = spike_slab_module(
             n_genes = self.adata.n_vars,
-            n_latent=n_latent,
+            n_latent=self.n_latent,
             **model_kwargs,
         )
         
         self._model_summary_string = (
             "spike_slab with the following params:  n_genes: {}, n_latent: {}"
-        ).format(self.adata.n_vars, n_latent)
+        ).format(self.adata.n_vars, self.n_latent)
            
