@@ -14,8 +14,8 @@ from math import ceil, floor
 from typing import Optional, Union, Literal, Sequence, Tuple, Dict
 
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks.early_stopping import EarlyStopping 
-from pytorch_lightning.loggers import LightningLoggerBase
+from pytorch_lightning.callbacks.early_stopping import EarlyStopping
+from pytorch_lightning.loggers import Logger
 from pytorch_lightning.utilities import rank_zero_only
 
 from nn.dataloader_util import AnnDataLoader
@@ -119,7 +119,7 @@ def _setup_unspliced_expression(
         )
     )
     pro_exp = adata.obsm[unspliced_obsm_key]
-    
+
     # setup protein names
     if unspliced_names_uns_key is None and isinstance(
         adata.obsm[unspliced_obsm_key], pd.DataFrame
@@ -192,12 +192,12 @@ def setup_anndata(
 
     if copy:
         return adata
-    
+
 class BaseModelClass(ABC):
     """Abstract class for deltaTopic models."""
 
     def __init__(self, adata: Optional[AnnData] = None):
-        
+
         self.is_trained_ = False
         self._model_summary_string = ""
         self.train_indices_ = None
@@ -313,7 +313,7 @@ class BaseModelClass(ABC):
     def history(self):
         """Returns computed metrics during training."""
         return self.history_
-        
+
     @abstractmethod
     def train(self):
         """Trains the model."""
@@ -400,7 +400,7 @@ class BaseModelClass(ABC):
         -------
         Model with loaded state dictionaries.
 
-    
+
         """
         load_adata = adata is None
         use_gpu, device = parse_use_gpu_arg(use_gpu)
@@ -424,7 +424,7 @@ class BaseModelClass(ABC):
 
         model.to_device(device)
         model.module.eval()
-        
+
         return model
 
 def _load_saved_files(
@@ -502,7 +502,7 @@ class DataSplitter(pl.LightningDataModule):
         Use default GPU if available (if None or True), or index of GPU to use (if int),
         or name of GPU (if str, e.g., `'cuda:0'`), or use CPU (if False).
     **kwargs
-        Keyword args for data loader. 
+        Keyword args for data loader.
 
     Examples
     --------
@@ -717,7 +717,7 @@ class Trainer(pl.Trainer):
         early_stopping_mode: Literal["min", "max"] = "min",
         progress_bar_refresh_rate: int = 1,
         simple_progress_bar: bool = True,
-        logger: Union[Optional[LightningLoggerBase], bool] = None,
+        logger: Union[Optional[Logger], bool] = None,
         **kwargs
     ):
 
@@ -776,7 +776,7 @@ class Trainer(pl.Trainer):
             )
             super().fit(*args, **kwargs)
 
-class SimpleLogger(LightningLoggerBase):
+class SimpleLogger(Logger):
     def __init__(self):
         super().__init__()
         self._data = {}
@@ -826,4 +826,3 @@ class SimpleLogger(LightningLoggerBase):
     @property
     def name(self):
         return "SimpleLogger"
-
