@@ -707,7 +707,7 @@ class Trainer(pl.Trainer):
         max_epochs: int = 400,
         # checkpoint_callback: bool = False,
         num_sanity_val_steps: int = 0,
-        weights_summary: Optional[Literal["top", "full"]] = None,
+        # weights_summary: Optional[Literal["top", "full"]] = None,
         early_stopping: bool = False,
         early_stopping_monitor: Literal[
             "elbo_validation", "reconstruction_loss_validation", "kl_local_validation"
@@ -752,7 +752,7 @@ class Trainer(pl.Trainer):
             max_epochs=max_epochs,
             # checkpoint_callback=checkpoint_callback,
             num_sanity_val_steps=num_sanity_val_steps,
-            weights_summary=weights_summary,
+            # weights_summary=weights_summary,
             logger=logger,
             progress_bar_refresh_rate=progress_bar_refresh_rate,
             **kwargs,
