@@ -102,7 +102,7 @@ def sim_data_NB(N, G, S, D_tree, alpha0=5):
 
     beta = torch.sparse.mm(A, (node_effect[:, None] * pi.to_dense()).to_sparse())
 
-    theta = Dirichlet(alpha0 * softmax(torch.randn((topics)))).rsample((N,))
+    theta = Dirichlet(alpha0 * softmax(torch.randn((N, topics)))).sample()
 
     rho = torch.mm(theta.to_sparse(), beta)
 
