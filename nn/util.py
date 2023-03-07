@@ -702,7 +702,6 @@ class Trainer(pl.Trainer):
         self,
         gpus: Union[int, str] = 1,
         benchmark: bool = True,
-        flush_logs_every_n_steps=np.inf,
         check_val_every_n_epoch: Optional[int] = None,
         max_epochs: int = 400,
         checkpoint_callback: bool = False,
@@ -747,7 +746,6 @@ class Trainer(pl.Trainer):
         super().__init__(
             gpus=gpus,
             benchmark=benchmark,
-            flush_logs_every_n_steps=flush_logs_every_n_steps,
             check_val_every_n_epoch=check_val_every_n_epoch,
             max_epochs=max_epochs,
             checkpoint_callback=checkpoint_callback,
