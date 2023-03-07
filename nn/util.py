@@ -715,7 +715,7 @@ class Trainer(pl.Trainer):
         early_stopping_min_delta: float = 0.00,
         early_stopping_patience: int = 45,
         early_stopping_mode: Literal["min", "max"] = "min",
-        progress_bar_refresh_rate: int = 1,
+        # progress_bar_refresh_rate: int = 1,
         simple_progress_bar: bool = True,
         logger: Union[Optional[Logger], bool] = None,
         **kwargs
@@ -754,7 +754,7 @@ class Trainer(pl.Trainer):
             num_sanity_val_steps=num_sanity_val_steps,
             # weights_summary=weights_summary,
             logger=logger,
-            progress_bar_refresh_rate=progress_bar_refresh_rate,
+            # progress_bar_refresh_rate=progress_bar_refresh_rate,
             **kwargs,
         )
 
