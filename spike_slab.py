@@ -10,15 +10,12 @@ from pytorch_lightning import seed_everything
 from modelhub import spike_slab
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
-parser.add_argument('--nLV', type=int, help='nLV', default=16) # 4, 32, 128
-parser.add_argument('--pip0', type=float, help='pip0', default=0.1) # 1e-3, 1e-2, 1e-1, 1
-parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=2000) # 1000
+parser.add_argument('--nLV', type=int, help='User specified nLV', default=32) # 4, 32, 128
+
+parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=1000) # 1000
 parser.add_argument('--lr', type=float, help='learning_rate', default=1e-2) # 0.01
 parser.add_argument('--bs', type=int, help='Batch size', default=128) # 128
-parser.add_argument('--kl_weight', type=float, 
-                    help='weight for kl local term', default=1) # 1
-parser.add_argument('--kl_weight_beta', type=float, 
-                    help='weight for global parameter beta in the kl term', default=1) # 1
+
 parser.add_argument('--train_size', type=float, 
                     help='set to 1 to use full dataset for training; set to 0.9 for train(0.9)/test(0.1) split', 
                     default=1)
@@ -29,7 +26,7 @@ parser.add_argument('--check_val_every_n_epoch', type=int,
 args = parser.parse_args()
 print(args)
 
-model_id = f"spike_slab_ep{args.EPOCHS}_nLV{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"spike_slab_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_seed{args.seed}"
 print(model_id)
 #%%
 adata = sc.read('data/sim_tree.h5ad')
@@ -41,10 +38,11 @@ now = datetime.datetime.now()
 logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
 model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-model = spike_slab(adata, nLV = args.nLV, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+model = spike_slab(adata, n_latent = args.nLV)
 
 seed_everything(args.seed, workers=True)
 #set deterministic=True for reproducibility
+# check if the model already exists
 if os.path.exists(os.path.join("models", model_id)):
     print("Model already exists, skip training")
     print(f"Model saved at:", os.path.join("models", model_id))
