@@ -186,7 +186,7 @@ def sim_data_mult_unif(N, G, S, D_tree, gamma0=500, alpha0=5, dthet = False):
 
 def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
     if os.path.exists(outfile):
-        print("simulated data file already exists")
+        print(f"simulated data file already exists, loading data from {outfile}")
         return ad.read_h5ad(outfile)
 
     print("simulated data does not yet exist, generating simulated data")
@@ -200,30 +200,24 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
     types = bulk.columns
     n_types = bulk.shape[1]
 
-    type_dist = scipy.special.log_softmax(bulk + noise, axis = 0)
-
     cell_types = np.random.choice(n_types, N)
     cell_type_names = types[cell_types]
-    sample_id = cell_type_names + "_" + list(map(str, np.arange(N)))
+    cell_id = cell_type_names + "_" + list(map(str, np.arange(N)))
 
     D = np.round(np.exp(np.random.normal(size = N)) * G)
 
-    X = pd.DataFrame(columns = genes, index = sample_id)
+    X = pd.DataFrame(columns = genes, index = cell_id)
 
     for i in range(N):
         cell_type = cell_types[i]
-        X.loc[sample_id[i]] = np.random.multinomial(D[i], np.random.dirichlet(bulk.loc[:, types[cell_type]] + noise))
+        X.loc[cell_id[i]] = np.random.multinomial(D[i], np.random.dirichlet(bulk.loc[:, types[cell_type]] + noise))
 
-    sparse_counts = csr_matrix(X.to_numpy(dtype = np.float32))
-    adata = ad.AnnData(sparse_counts)
+    adata = ad.AnnData(X)
 
     adata.obs = pd.DataFrame({
-        "sample_id": sample_id,
         "cell_type": cell_type_names,
         "read_depth": D
-    })
-
-    adata.var = pd.DataFrame(genes, columns = ["gene"])
+    }, index = cell_id)
 
     print(f"saving simulated data to {outfile}")
     adata.write_h5ad(outfile)

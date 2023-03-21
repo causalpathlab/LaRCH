@@ -30,7 +30,9 @@ if not os.path.exists(dir):
     counts = csr_matrix(X.numpy())
     adata = ad.AnnData(counts)
 
+    adata.obs_names = sample_name
     adata.obs = pd.DataFrame(sample_name, columns = ["sample_id"])
+    adata.var_names = gene_name
     adata.var = pd.DataFrame(gene_name, columns = ["gene"])
     adata.write_h5ad(os.path.join(dir, "sim_tree.h5ad"))
 
