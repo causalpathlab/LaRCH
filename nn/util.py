@@ -26,6 +26,15 @@ def _get_var_names_from_setup_anndata(adata):
     """Gets var names by checking if using raw."""
     var_names = adata.var_names
     return var_names
+class _CONSTANTS:
+    X_KEY = "X"
+    BATCH_KEY = "batch_indices"
+    LOCAL_L_MEAN_KEY = "local_l_mean"
+    LOCAL_L_VAR_KEY = "local_l_var"
+    LABELS_KEY = "labels"
+    PROTEIN_EXP_KEY = "unspliced_expression"
+    CAT_COVS_KEY = "cat_covs"
+    CONT_COVS_KEY = "cont_covs"
 
 def parse_use_gpu_arg(
     use_gpu: Optional[Union[str, int, bool]] = None,
