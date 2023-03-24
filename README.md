@@ -11,7 +11,7 @@
 - [X] tree spike slab
   - [sparse models], pip < 1, e.g., 0.1, 0.01., 0.5 
   - [dense model], pip = 1
-- [ ] tree susie spike slab
+- [X] tree susie spike slab
   
 ## Evaluation
 - [X] Normalized Mutual Information (NMI)
