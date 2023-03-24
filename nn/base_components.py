@@ -740,3 +740,95 @@ class BALSAMEncoder(nn.Module):
         latent = reparameterize_gaussian(q_m, q_v)
 
         return q_m, q_v, latent    
+    
+class SusieDecoder(nn.Module):
+    """
+    Decoder for Tree ETM
+    """
+    def __init__(
+        self,
+        #n_input: int,
+        n_output: int,
+        pip0 = 0.1,
+        v0 = 1,
+        tree_depth = 3,
+    ):
+        super().__init__()
+        
+        ## dimensions
+        self.n_output = n_output # genes
+        self.tree_depth = tree_depth # tree depth
+        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
+        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
+        # adjaency matrix for binay tree
+        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
+        # hyper-parameters
+        self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
+        # model parameters
+        self.slab_mean = nn.Parameter(torch.randn(self.num_tree_nodes, n_output) * torch.sqrt(torch.ones(1) * v0))
+        self.slab_lnvar = nn.Parameter(torch.ones(self.num_tree_nodes, n_output) * torch.log(torch.ones(1) * v0))
+        # Unnomralized logit to select relevant genes for each node
+        self.untran_pi = nn.Parameter(torch.randn(self.num_tree_nodes,n_output))
+        # helper functions
+        self.log_softmax = nn.LogSoftmax(dim=-1)
+    
+    def forward(
+        self,
+        z: torch.Tensor,
+    ):
+        # topic proportions
+        theta = self.soft_max(z)
+        # node X gene
+        pi = self.soft_max(self.untran_pi)
+        rho = self.get_get_beta(pi, self.slab_mean, self.slab_lnvar)
+        beta = torch.safe_exp(torch.mm(self.A, rho))
+        aa = torch.mm(theta, beta)
+        rho_kl = self.sparse_kl_loss(self.lnvar_0, pi, self.slab_mean, self.slab_lnvar)
+        
+        return rho, rho_kl, theta, beta, aa
+    
+    def get_rho(
+        self,
+    ):
+        pi = self.soft_max(self.untran_pi)
+        rho = self.get_beta(pi, self.slab_mean, self.slab_lnvar)
+        
+        return rho
+    
+    def get_beta(self, 
+        pi: torch.Tensor,
+        slab_mean: torch.Tensor, 
+        slab_lnvar: torch.Tensor,
+    ): 
+        pi_hat = pi.unsqueeze(dim = -1).expand(-1, slab_mean.shape[1]) 
+        mean = slab_mean * pi_hat
+        var = pi_hat * (1 - pi_hat) * torch.square(slab_mean)
+        var = var + pi_hat * torch.exp(slab_lnvar)
+        eps = torch.randn_like(var)
+        
+        return mean + eps * torch.sqrt(var)
+    
+    def safe_exp(self, x, x_min = -10, x_max = 10):
+        return torch.exp(torch.clamp(x, x_min, x_max))
+    
+    def soft_max(self, 
+                 z: torch.Tensor,
+    ):    
+        return torch.exp(self.log_softmax(z))
+    
+    def sparse_kl_loss(
+        self,
+        lnvar_0,
+        pi,
+        slab_mean,
+        slab_lnvar,
+    ):                           
+        # entropy term
+        pi_hat = pi.unsqueeze(dim = -1).expand(-1, slab_mean.shape[1])
+        entropy = - pi_hat * torch.log(pi_hat)
+        ## Gaussian KL between N(μ,ν) and N(0, v0) 
+        sq_term = torch.exp(-lnvar_0) * (torch.square(slab_mean) + torch.exp(slab_lnvar))
+        kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
+        ## Combine both entropy and Gaussian KL
+        return torch.sum(entropy + pi_hat * kl_g) # return a number sum over [N_nodes, N_genes]
+  
