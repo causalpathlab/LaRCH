@@ -26,13 +26,15 @@ parser.add_argument('--seed', type=int, help='seed', default=66)
 parser.add_argument('--use_gpu', type=int, help='which GPU to use', default=0)
 parser.add_argument('--check_val_every_n_epoch', type=int,
                     help='interval to perform evalutions', default=1)
+parser.add_argument('--data_file', help='filepath to h5ad file', default='data/sim_tree.h5ad')
+parser.add_argument('--data_id', help='data id', default='sim_data')
 args = parser.parse_args()
 print(args)
 
-model_id = f"susie_tree_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"susie_tree_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
 print(model_id)
 #%%
-adata = sc.read('data/sim_tree.h5ad')
+adata = sc.read(args.data_file)
 adata.layers["counts"] = csr_matrix(adata.X).copy()
 setup_anndata(adata, layer="counts")
 
