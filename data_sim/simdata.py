@@ -5,9 +5,7 @@ This file and `data_sim/simdata_util.py` need to be moved to the main directory 
 import os
 import anndata as ad
 import pandas as pd
-import hdf5plugin
 import torch
-from scipy.sparse import csr_matrix
 from simdata_util import sim_data
 
 seed = 123
@@ -25,8 +23,7 @@ if not os.path.exists(dir):
 
     os.mkdir(dir)
 
-    counts = csr_matrix(X.numpy())
-    adata = ad.AnnData(counts)
+    adata = ad.AnnData(X.numpy())
 
     adata.obs = pd.DataFrame(sample_name, columns = ["sample_id"])
     adata.var = pd.DataFrame(gene_name, columns = ["gene"])

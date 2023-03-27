@@ -1,9 +1,6 @@
 import os
 import pandas as pd
-import numpy as np
 import anndata as ad
-import scipy
-from scipy.sparse import csr_matrix
 import torch
 from torch.distributions import Normal, Dirichlet, Multinomial, NegativeBinomial, Uniform
 from nn import pbt_util as tree_util
@@ -190,7 +187,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
         return ad.read_h5ad(outfile)
 
     print("simulated data does not yet exist, generating simulated data")
-    np.random.seed(seed)
+    torch.manual_seed(seed)
 
     bulk = pd.read_csv(bulk_file)
     bulk = bulk.set_index('gene')
@@ -200,17 +197,17 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
     types = bulk.columns
     n_types = bulk.shape[1]
 
-    cell_types = np.random.choice(n_types, N)
+    cell_types = torch.randint(n_types, (N,))
     cell_type_names = types[cell_types]
-    cell_id = cell_type_names + "_" + list(map(str, np.arange(N)))
+    cell_id = cell_type_names + "_" + list(map(str, range(N)))
 
-    D = np.round(np.exp(np.random.normal(size = N)) * G)
+    D = torch.round(torch.exp(torch.randn((N,))) * G)
 
     X = pd.DataFrame(columns = genes, index = cell_id)
 
     for i in range(N):
-        cell_type = cell_types[i]
-        X.loc[cell_id[i]] = np.random.multinomial(D[i], np.random.dirichlet(bulk.loc[:, types[cell_type]] + noise))
+        cell_type = cell_types[i].item()
+        X.loc[cell_id[i]] = Multinomial(round(D[i].item()), Dirichlet(torch.tensor(bulk.loc[:, types[cell_type]] + noise)).sample()).sample()
 
     adata = ad.AnnData(X)
 
