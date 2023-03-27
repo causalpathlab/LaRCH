@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 """base components for VAE, ETM, pathway-guided connection"""
 import collections
-from typing import Iterable
+from collections.abc import Iterable
 import torch
 from torch import nn as nn
 from torch.distributions import Normal
-import nn.pbt_util as tree_util
-torch.backends.cudnn.benchmark = True
 import torch.nn.functional as F
+import nn.pbt_util as tree_util
+
+torch.backends.cudnn.benchmark = True
+
 def identity(x):
     return x
 
