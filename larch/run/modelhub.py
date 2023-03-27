@@ -4,9 +4,9 @@ from typing import List, Optional, Union
 import torch
 import numpy as np
 from anndata import AnnData
-from nn.util import DataSplitter, TrainRunner, BaseModelClass
-from nn.TrainingPlan import TrainingPlan
-from nn.module import tree_spike_slab_module, BALSAM_module, susie_tree_module
+from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
+from larch.nn.TrainingPlan import TrainingPlan
+from larch.nn.module import tree_spike_slab_module, BALSAM_module, susie_tree_module
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,7 @@ class tree_spike_slab(BaseModelClass):
         Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
         and contains data.
     tree_depth
-        depth of the tree    
+        depth of the tree
     **model_kwargs
         Keyword args for :class:`~module.DeltaETM_module`
 
@@ -47,11 +47,11 @@ class tree_spike_slab(BaseModelClass):
             tree_depth = self.tree_depth,
             **model_kwargs,
         )
-        
+
         self._model_summary_string = (
             "tree_spike_slab with the following params:  n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
-           
+
     def train(
         self,
         max_epochs: Optional[int] = 1000,
@@ -93,7 +93,7 @@ class tree_spike_slab(BaseModelClass):
             Overrides `n_steps_kl_warmup` when both are not `None`.
 
         """
-       
+
         n_steps_kl_warmup = (
             n_steps_kl_warmup
             if n_steps_kl_warmup is not None
@@ -133,7 +133,7 @@ class tree_spike_slab(BaseModelClass):
             **kwargs,
         )
         return runner()
-    
+
     @torch.no_grad()
     def get_latent_representation(
         self,
@@ -143,7 +143,7 @@ class tree_spike_slab(BaseModelClass):
         batch_size: int = 128,
     ) -> List[np.ndarray]:
         """
-        Return the latent space embedding for each dataset, 
+        Return the latent space embedding for each dataset,
 
         Parameters
         ----------
@@ -152,7 +152,7 @@ class tree_spike_slab(BaseModelClass):
         deterministic
             If true, use the mean of the encoder instead of a Gaussian sample.
         output_softmax_z
-            if true, output probability, otherwise output z.    
+            if true, output probability, otherwise output z.
         batch_size
             Minibatch size for data loading into model.
         """
@@ -167,44 +167,44 @@ class tree_spike_slab(BaseModelClass):
                 sample_batch
             ) = _unpack_tensors(tensors)
             z_dict  = self.module.sample_from_posterior_z(sample_batch, deterministic=deterministic, output_softmax_z=output_softmax_z)
-            latent_z.append(z_dict["z"])                
+            latent_z.append(z_dict["z"])
 
         latent_z = torch.cat(latent_z).cpu().detach().numpy()
-        
+
         print(f'Deterministic: {deterministic}, output_softmax_z: {output_softmax_z}' )
         return latent_z
-     
+
     @torch.no_grad()
     def get_parameters(
         self,
-        save_dir = None, 
+        save_dir = None,
         overwrite = False,
     ) -> List[np.ndarray]:
         """return the spike logit, slab mean, slab lnvar for rho"""
-        
+
         self.module.eval()
         decoder = self.module.decoder
-        
-        
+
+
         if not os.path.exists(os.path.join(save_dir,"model_parameters")) or overwrite:
             os.makedirs(os.path.join(save_dir,"model_parameters"), exist_ok=overwrite)
-            
-        
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "spike_logit_rho.txt"
             ), decoder.spike_logit.cpu().numpy())
-        
+
 
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_mean_rho.txt"
             ), decoder.slab_mean.cpu().numpy())
-        
-    
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_lnvar_rho.txt"
             ), decoder.slab_lnvar.cpu().numpy())
-        
-                
+
+
     def save(
         self,
         dir_path: str,
@@ -245,7 +245,7 @@ class tree_spike_slab(BaseModelClass):
                 dir_path, "adata.h5ad"
             )
             self.adata.write(save_path)
-            
+
         varnames_save_path = os.path.join(
             dir_path, "var_names.csv"
         )
@@ -269,17 +269,17 @@ class spike_slab(BaseModelClass):
         super(spike_slab, self).__init__()
         self.n_latent = n_latent
         self.adata = adata_seq
-         
+
         self.module = BALSAM_module(
             n_genes = self.adata.n_vars,
             n_latent=n_latent,
             **model_kwargs,
         )
-        
+
         self._model_summary_string = (
             "spike_slab with the following params: \nn_latent: {},  n_genes: {}"
         ).format(n_latent, self.adata.n_vars)
-           
+
     def train(
         self,
         max_epochs: Optional[int] = 1000,
@@ -319,7 +319,7 @@ class spike_slab(BaseModelClass):
             Number of epochs to scale weight on KL divergences from 0 to 1.
             Overrides `n_steps_kl_warmup` when both are not `None`.
         """
-       
+
         n_steps_kl_warmup = (
             n_steps_kl_warmup
             if n_steps_kl_warmup is not None
@@ -359,7 +359,7 @@ class spike_slab(BaseModelClass):
             **kwargs,
         )
         return runner()
-    
+
     @torch.no_grad()
     def get_latent_representation(
         self,
@@ -369,7 +369,7 @@ class spike_slab(BaseModelClass):
         batch_size: int = 128,
     ) -> List[np.ndarray]:
         """
-        Return the latent space embedding for each dataset, 
+        Return the latent space embedding for each dataset,
         Parameters
         ----------
         adatas
@@ -377,7 +377,7 @@ class spike_slab(BaseModelClass):
         deterministic
             If true, use the mean of the encoder instead of a Gaussian sample.
         output_softmax_z
-            if true, output probability, otherwise output z.    
+            if true, output probability, otherwise output z.
         batch_size
             Minibatch size for data loading into model.
         """
@@ -392,49 +392,49 @@ class spike_slab(BaseModelClass):
                 sample_batch
             ) = _unpack_tensors(tensors)
             z_dict  = self.module.sample_from_posterior_z(sample_batch, deterministic=deterministic, output_softmax_z=output_softmax_z)
-            latent_z.append(z_dict["z"])                
+            latent_z.append(z_dict["z"])
 
         latent_z = torch.cat(latent_z).cpu().detach().numpy()
-        
+
         print(f'Deterministic: {deterministic}, output_softmax_z: {output_softmax_z}' )
         return latent_z
-    
-    
+
+
     @torch.no_grad()
     def get_parameters(
         self,
-        save_dir = None, 
+        save_dir = None,
         overwrite = False,
     ) -> List[np.ndarray]:
         """return the spike logit, slab mean, slab lnvar for rho"""
-        
+
         self.module.eval()
         decoder = self.module.decoder
-        
-        
+
+
         if not os.path.exists(os.path.join(save_dir,"model_parameters")) or overwrite:
             os.makedirs(os.path.join(save_dir,"model_parameters"), exist_ok=overwrite)
-            
-        
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "spike_logit_rho.txt"
             ), decoder.spike_logit.cpu().numpy())
-        
+
 
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_mean_rho.txt"
             ), decoder.slab_mean.cpu().numpy())
-        
-    
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_lnvar_rho.txt"
             ), decoder.slab_lnvar.cpu().numpy())
-        
- 
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "bias_gene.txt"
             ), decoder.bias_d.cpu().numpy())
-                
+
     def save(
         self,
         dir_path: str,
@@ -494,7 +494,7 @@ class susie_tree(BaseModelClass):
         Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
         and contains data.
     tree_depth
-        depth of the tree    
+        depth of the tree
     **model_kwargs
         Keyword args for :class:`~module.DeltaETM_module`
 
@@ -517,11 +517,11 @@ class susie_tree(BaseModelClass):
             tree_depth = self.tree_depth,
             **model_kwargs,
         )
-        
+
         self._model_summary_string = (
             "tree_spike_slab with the following params:  n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
-           
+
     def train(
         self,
         max_epochs: Optional[int] = 1000,
@@ -563,7 +563,7 @@ class susie_tree(BaseModelClass):
             Overrides `n_steps_kl_warmup` when both are not `None`.
 
         """
-       
+
         n_steps_kl_warmup = (
             n_steps_kl_warmup
             if n_steps_kl_warmup is not None
@@ -603,7 +603,7 @@ class susie_tree(BaseModelClass):
             **kwargs,
         )
         return runner()
-    
+
     @torch.no_grad()
     def get_latent_representation(
         self,
@@ -613,7 +613,7 @@ class susie_tree(BaseModelClass):
         batch_size: int = 128,
     ) -> List[np.ndarray]:
         """
-        Return the latent space embedding for each dataset, 
+        Return the latent space embedding for each dataset,
 
         Parameters
         ----------
@@ -622,7 +622,7 @@ class susie_tree(BaseModelClass):
         deterministic
             If true, use the mean of the encoder instead of a Gaussian sample.
         output_softmax_z
-            if true, output probability, otherwise output z.    
+            if true, output probability, otherwise output z.
         batch_size
             Minibatch size for data loading into model.
         """
@@ -637,45 +637,45 @@ class susie_tree(BaseModelClass):
                 sample_batch
             ) = _unpack_tensors(tensors)
             z_dict  = self.module.sample_from_posterior_z(sample_batch, deterministic=deterministic, output_softmax_z=output_softmax_z)
-            latent_z.append(z_dict["z"])                
+            latent_z.append(z_dict["z"])
 
         latent_z = torch.cat(latent_z).cpu().detach().numpy()
-        
+
         print(f'Deterministic: {deterministic}, output_softmax_z: {output_softmax_z}' )
         return latent_z
-     
+
     @torch.no_grad()
     def get_parameters(
         self,
-        save_dir = None, 
+        save_dir = None,
         overwrite = False,
     ) -> List[np.ndarray]:
         """return the spike logit, slab mean, slab lnvar for rho"""
-        
+
         self.module.eval()
         decoder = self.module.decoder
-        
-        
+
+
         if not os.path.exists(os.path.join(save_dir,"model_parameters")) or overwrite:
             os.makedirs(os.path.join(save_dir,"model_parameters"), exist_ok=overwrite)
-            
-        
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "untran_pi.txt"
             ), decoder.untran_pi.cpu().numpy())
-        
 
-        
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_mean_rho.txt"
             ), decoder.slab_mean.cpu().numpy())
-        
-    
+
+
         np.savetxt(os.path.join(
                 save_dir,"model_parameters", "slab_lnvar_rho.txt"
             ), decoder.slab_lnvar.cpu().numpy())
-        
-                
+
+
     def save(
         self,
         dir_path: str,
@@ -716,7 +716,7 @@ class susie_tree(BaseModelClass):
                 dir_path, "adata.h5ad"
             )
             self.adata.write(save_path)
-            
+
         varnames_save_path = os.path.join(
             dir_path, "var_names.csv"
         )

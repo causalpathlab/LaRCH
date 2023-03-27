@@ -6,7 +6,7 @@ import os
 import anndata as ad
 import pandas as pd
 import torch
-from simdata_util import sim_data
+from larch.data_sim.simdata_util import sim_data
 
 seed = 123
 N = 5000

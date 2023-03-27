@@ -6,7 +6,7 @@ import torch
 from torch import nn as nn
 from torch.distributions import Normal
 import torch.nn.functional as F
-import nn.pbt_util as tree_util
+import larch.util.pbt_util as tree_util
 
 torch.backends.cudnn.benchmark = True
 

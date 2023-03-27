@@ -1,10 +1,10 @@
 import torch
 from inspect import getfullargspec
-from typing import Union, Literal
+from typing import Literal
 import pytorch_lightning as pl
 import torch
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from nn.base_model import BaseModuleClass
+from larch.nn.base_model import BaseModuleClass
 
 class TrainingPlan(pl.LightningModule):
     """
@@ -53,8 +53,8 @@ class TrainingPlan(pl.LightningModule):
         weight_decay: float = 1e-6,
         eps: float = 0.01,
         optimizer: Literal["Adam", "AdamW"] = "Adam",
-        n_steps_kl_warmup: Union[int, None] = None,
-        n_epochs_kl_warmup: Union[int, None] = 400,
+        n_steps_kl_warmup: int | None = None,
+        n_epochs_kl_warmup: int | None = 400,
         reduce_lr_on_plateau: bool = False,
         lr_factor: float = 0.6,
         lr_patience: int = 30,
@@ -247,4 +247,3 @@ class TrainingPlan(pl.LightningModule):
         else:
             kl_weight = 1.0
         return kl_weight
-

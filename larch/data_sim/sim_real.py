@@ -1,5 +1,5 @@
 import os
-from simdata_util import sim_real
+from larch.data_sim.simdata_util import sim_real
 
 N = 5000
 noise = 50

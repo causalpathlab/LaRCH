@@ -232,7 +232,7 @@ class AnnDataLoader(DataLoader):
         shuffle=False,
         indices=None,
         batch_size=128,
-        data_and_attributes: dict | None,
+        data_and_attributes: dict | None = None,
         drop_last: bool | int = False,
         **data_loader_kwargs,
     ):

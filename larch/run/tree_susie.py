@@ -1,13 +1,13 @@
 import os
 from scipy.sparse import csr_matrix
-from nn.util import setup_anndata
+from larch.util.util import setup_anndata
 import scanpy as sc
 import pandas as pd
 import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from modelhub import tree_spike_slab
+from larch.run.modelhub import susie_tree
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
 parser.add_argument('--tree_depth', type=int, help='tree depth', default=5) # 4, 32, 128
@@ -26,15 +26,13 @@ parser.add_argument('--seed', type=int, help='seed', default=66)
 parser.add_argument('--use_gpu', type=int, help='which GPU to use', default=0)
 parser.add_argument('--check_val_every_n_epoch', type=int,
                     help='interval to perform evalutions', default=1)
-parser.add_argument('--data_file', help='filepath to h5ad file', default='data/sim_tree.h5ad')
-parser.add_argument('--data_name', help='filepath to h5ad file', default='sim_data')
 args = parser.parse_args()
 print(args)
 
-model_id = f"tree_spike_slab_{args.data_name}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+model_id = f"susie_tree_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
 print(model_id)
 #%%
-adata = sc.read(args.data_file)
+adata = sc.read('data/sim_tree.h5ad')
 adata.layers["counts"] = csr_matrix(adata.X).copy()
 setup_anndata(adata, layer="counts")
 
@@ -43,7 +41,7 @@ now = datetime.datetime.now()
 logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
 model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-model = tree_spike_slab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+model = susie_tree(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
 
 seed_everything(args.seed, workers=True)
 #set deterministic=True for reproducibility

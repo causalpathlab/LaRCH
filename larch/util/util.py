@@ -18,7 +18,7 @@ from pytorch_lightning.callbacks.early_stopping import EarlyStopping
 from pytorch_lightning.loggers import Logger
 from pytorch_lightning.utilities import rank_zero_only
 
-from nn.dataloader_util import AnnDataLoader
+from larch.util.dataloader_util import AnnDataLoader
 
 logger = logging.getLogger(__name__)
 

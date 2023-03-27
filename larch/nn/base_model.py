@@ -206,8 +206,7 @@ class BaseModuleClass(nn.Module):
         generative_kwargs: dict | None,
         loss_kwargs: dict | None,
         compute_loss=True,
-    ) -> tuple[torch.Tensor, torch.Tensor] |
-        tuple[torch.Tensor, torch.Tensor, LossRecorder]:
+    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, LossRecorder]:
         """
         Forward pass through the network.
 

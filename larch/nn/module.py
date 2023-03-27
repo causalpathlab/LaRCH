@@ -1,12 +1,11 @@
 # -*- coding: utf-8 -*-
 """Main module."""
-from typing import Tuple
 import torch
 from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
-from nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
-from nn.base_components import BayesianETMEncoder, TreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
-from nn.util import _CONSTANTS
+from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
+from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
+from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
 
@@ -146,7 +145,7 @@ class tree_spike_slab_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         kl_weight_beta = 1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.
@@ -217,19 +216,12 @@ class BALSAM_module(BaseModuleClass):
         dim_hidden_encoder: int = 128,
         log_variational: bool = True,
         pip0_rho: float = 0.1,
-<<<<<<< HEAD
         kl_weight: float = 1.0,
         kl_weight_beta: float = 1.0,
     ):
         super().__init__()
 
-=======
-        kl_weight_beta: float = 1.0,
-    ):
-        super().__init__()
-
         self.n_input = n_genes
->>>>>>> yichen
         self.n_latent = n_latent
         self.log_variational = log_variational
         self.pip0_rho = pip0_rho
@@ -349,7 +341,7 @@ class BALSAM_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         #kl_weight_beta = 1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.
@@ -427,14 +419,9 @@ class susie_tree_module(BaseModuleClass):
         self.pip0_rho = pip0_rho
         self.kl_weight = kl_weight
         self.kl_weight_beta = kl_weight_beta
-<<<<<<< HEAD
-
-        self.z_encoder = BayesianETMEncoder(
-=======
         self.tree_depth = tree_depth
 
-        self.z_encoder = BeyesianETMEncoder(
->>>>>>> yichen
+        self.z_encoder = BayesianETMEncoder(
             n_input=self.n_input,
             n_output=self.n_latent,
             n_hidden=dim_hidden_encoder,
@@ -541,7 +528,7 @@ class susie_tree_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         kl_weight_beta = 1.0,
-    ) -> Tuple[torch.Tensor, torch.Tensor]:
+    ) -> tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.

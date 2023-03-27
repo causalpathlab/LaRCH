@@ -3,7 +3,7 @@ import pandas as pd
 import anndata as ad
 import torch
 from torch.distributions import Normal, Dirichlet, Multinomial, NegativeBinomial, Uniform
-from nn import pbt_util as tree_util
+from larch.util import pbt_util as tree_util
 
 softmax = torch.nn.Softmax(dim = -1)
 
