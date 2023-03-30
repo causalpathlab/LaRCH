@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from larch.run.modelhub import spike_slab
+from larch.util.modelhub import spike_slab
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
 parser.add_argument('--nLV', type=int, help='User specified nLV', default=32) # 4, 32, 128

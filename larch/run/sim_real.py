@@ -1,6 +1,6 @@
 import os
 import argparse
-from larch.data_sim.simdata_util import sim_real
+from larch.util.simdata_util import sim_real
 
 parser = argparse.ArgumentParser(description='Data simulation parameters')
 parser.add_argument('--N', type=int, help='Number of cells', default=5000)

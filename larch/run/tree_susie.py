@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from larch.run.modelhub import susie_tree
+from larch.util.modelhub import susie_tree
 
 parser = argparse.ArgumentParser(description='Parameters for NN')
 parser.add_argument('--tree_depth', type=int, help='tree depth', default=5) # 4, 32, 128
