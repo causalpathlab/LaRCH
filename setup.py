@@ -12,5 +12,5 @@ setup(
         'tree_spike_slab = larch.run.tree_spike_slab:main',
         'tree_susie = larch.run.tree_susie:main']
     },
-    requires=['pandas', 'torch', 'functools', 'h5py', 'numpy', 'anndata', 'pytorch_lightning', 'pickle']
+    requires=['pandas', 'torch', 'functools', 'h5py', 'numpy', 'anndata', 'pytorch_lightning', 'pickle', 'scanpy']
 )
