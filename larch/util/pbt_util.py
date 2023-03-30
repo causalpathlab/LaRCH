@@ -8,7 +8,7 @@ import torch
 #' @return tree depth
 def num_pbt_nodes(kk):
     tree_depth = math.ceil(math.log2(kk)) + 1
-    return (2**tree_depth - 1).astype(int) # number of tree nodes
+    return int(2**tree_depth - 1) # number of tree nodes
 
 def pbt_nodes_to_depth(N):
     return (math.log2(N + 1)).astype(int)
