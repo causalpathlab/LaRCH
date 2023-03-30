@@ -3,6 +3,7 @@
 import torch
 from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
+from typing import Tuple
 from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
 from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
 from larch.util.util import _CONSTANTS
@@ -145,7 +146,7 @@ class tree_spike_slab_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         kl_weight_beta = 1.0,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.
@@ -341,7 +342,7 @@ class BALSAM_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         #kl_weight_beta = 1.0,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.
@@ -528,7 +529,7 @@ class susie_tree_module(BaseModuleClass):
         generative_outputs, # this is important to include
         kl_weight=1.0,
         kl_weight_beta = 1.0,
-    ) -> tuple[torch.Tensor, torch.Tensor]:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
 
         """
         Return the reconstruction loss and the Kullback divergences.
