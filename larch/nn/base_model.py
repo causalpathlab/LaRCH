@@ -1,6 +1,6 @@
 from abc import abstractmethod
-from typing import Any
-from collections.abc import Mapping, Sequence, Callable
+from typing import Dict, Optional, Tuple, Union, Callable, Any
+from collections.abc import Mapping, Sequence
 from functools import wraps
 import torch
 import torch.nn as nn
@@ -69,7 +69,7 @@ def _move_data_to_device(batch: Any, device: torch.device):
     return _apply_to_collection(batch, dtype=torch.Tensor, function=batch_to)
 
 def _apply_to_collection(
-    data: Any, dtype: type | tuple, function: Callable, *args, **kwargs
+    data: Any, dtype: Union[type, tuple], function: Callable, *args, **kwargs
 ) -> Any:
     """
     Recursively applies a function to all elements of a certain dtype.
@@ -144,10 +144,12 @@ class LossRecorder:
 
     def __init__(
         self,
-        loss: dict[str, torch.Tensor] | torch.Tensor,
-        reconstruction_loss: dict[str, torch.Tensor] | torch.Tensor = torch.Tensor([0]),
-        kl_local: dict[str, torch.Tensor] | torch.Tensor = torch.Tensor([0]),
-        kl_global: dict[str, torch.Tensor] | torch.Tensor = torch.Tensor([0]),
+        loss: Union[Dict[str, torch.Tensor], torch.Tensor],
+        reconstruction_loss: Union[
+            Dict[str, torch.Tensor], torch.Tensor
+        ] = torch.Tensor([0]),
+        kl_local: Union[Dict[str, torch.Tensor], torch.Tensor] = torch.Tensor([0]),
+        kl_global: Union[Dict[str, torch.Tensor], torch.Tensor] = torch.Tensor([0]),
         **kwargs,
     ):
         self._loss = loss if isinstance(loss, dict) else dict(loss=loss)
@@ -200,13 +202,16 @@ class BaseModuleClass(nn.Module):
     def forward(
         self,
         tensors,
-        get_inference_input_kwargs: dict | None,
-        get_generative_input_kwargs: dict | None,
-        inference_kwargs: dict | None,
-        generative_kwargs: dict | None,
-        loss_kwargs: dict | None,
+        get_inference_input_kwargs: Optional[dict] = None,
+        get_generative_input_kwargs: Optional[dict] = None,
+        inference_kwargs: Optional[dict] = None,
+        generative_kwargs: Optional[dict] = None,
+        loss_kwargs: Optional[dict] = None,
         compute_loss=True,
-    ) -> tuple[torch.Tensor, torch.Tensor] | tuple[torch.Tensor, torch.Tensor, LossRecorder]:
+    ) -> Union[
+        Tuple[torch.Tensor, torch.Tensor],
+        Tuple[torch.Tensor, torch.Tensor, LossRecorder],
+    ]:
         """
         Forward pass through the network.
 
@@ -251,14 +256,14 @@ class BaseModuleClass(nn.Module):
             return inference_outputs, generative_outputs
 
     @abstractmethod
-    def _get_inference_input(self, tensors: dict[str, torch.Tensor], **kwargs):
+    def _get_inference_input(self, tensors: Dict[str, torch.Tensor], **kwargs):
         """Parse tensors dictionary for inference related values."""
 
     @abstractmethod
     def _get_generative_input(
         self,
-        tensors: dict[str, torch.Tensor],
-        inference_outputs: dict[str, torch.Tensor],
+        tensors: Dict[str, torch.Tensor],
+        inference_outputs: Dict[str, torch.Tensor],
         **kwargs,
     ):
         """Parse tensors dictionary for generative related values."""

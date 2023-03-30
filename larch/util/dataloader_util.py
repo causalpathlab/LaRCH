@@ -1,5 +1,6 @@
 import copy
 import logging
+from typing import Optional, Union, Dict, List
 import anndata
 import numpy as np
 import torch
@@ -47,7 +48,7 @@ class AnnTorchDataset(Dataset):
     def __init__(
         self,
         adata: anndata.AnnData,
-        getitem_tensors: list[str] | dict[str, type] = None,
+        getitem_tensors: Union[List[str], Dict[str, type]] = None,
     ):
         self.adata = adata
         self.attributes_and_types = None
@@ -77,10 +78,10 @@ class AnnTorchDataset(Dataset):
         """
         registered_keys = self.registered_keys
         getitem_tensors = self.getitem_tensors
-        if isinstance(getitem_tensors, list):
+        if isinstance(getitem_tensors, List):
             keys = getitem_tensors
             keys_to_type = {key: np.float32 for key in keys}
-        elif isinstance(getitem_tensors, dict):
+        elif isinstance(getitem_tensors, Dict):
             keys = getitem_tensors.keys()
             keys_to_type = getitem_tensors
         elif getitem_tensors is None:
@@ -88,7 +89,7 @@ class AnnTorchDataset(Dataset):
             keys_to_type = {key: np.float32 for key in keys}
         else:
             raise ValueError(
-                "getitem_tensors invalid type. Expected: list[str] or dict[str, type] or None"
+                "getitem_tensors invalid type. Expected: List[str] or Dict[str, type] or None"
             )
         for key in keys:
             assert (
@@ -97,7 +98,7 @@ class AnnTorchDataset(Dataset):
 
         self.attributes_and_types = keys_to_type
 
-    def __getitem__(self, idx: list[int]) -> dict[str, torch.Tensor]:
+    def __getitem__(self, idx: List[int]) -> Dict[str, torch.Tensor]:
         """Get tensors in dictionary from anndata at idx."""
         data_numpy = {}
         for key, dtype in self.attributes_and_types.items():
@@ -155,7 +156,7 @@ class BatchSampler(torch.utils.data.sampler.Sampler):
         indices: np.ndarray,
         batch_size: int,
         shuffle: bool,
-        drop_last: bool | int = False,
+        drop_last: Union[bool, int] = False,
     ):
         self.indices = indices
         self.n_obs = len(indices)
@@ -232,8 +233,8 @@ class AnnDataLoader(DataLoader):
         shuffle=False,
         indices=None,
         batch_size=128,
-        data_and_attributes: dict | None = None,
-        drop_last: bool | int = False,
+        data_and_attributes: Optional[Dict] = None,
+        drop_last: Union[bool, int] = False,
         **data_loader_kwargs,
     ):
 

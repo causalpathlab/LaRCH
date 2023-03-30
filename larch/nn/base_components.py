@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """base components for VAE, ETM, pathway-guided connection"""
 import collections
-from collections.abc import Iterable
+from typing import Iterable
 import torch
 from torch import nn as nn
 from torch.distributions import Normal
