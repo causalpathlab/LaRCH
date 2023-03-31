@@ -34,25 +34,28 @@ def main():
 
     model_id = f"susie_tree_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
-    #%%
-    adata = sc.read(args.data_file)
-    adata.layers["counts"] = csr_matrix(adata.X).copy()
-    setup_anndata(adata, layer="counts")
 
-    #%% Initialize the model and train
-    now = datetime.datetime.now()
-    logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
-    model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
-
-    model = susie_tree(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
-
-    seed_everything(args.seed, workers=True)
-    #set deterministic=True for reproducibility
     if os.path.exists(os.path.join("models", model_id)):
         print("Model already exists, skip training")
         print(f"Model saved at:", os.path.join("models", model_id))
     else:
         print("Model does not exist, training new model")
+        
+        #%%
+        adata = sc.read(args.data_file)
+        adata.layers["counts"] = csr_matrix(adata.X).copy()
+        setup_anndata(adata, layer="counts")
+
+        #%% Initialize the model and train
+        now = datetime.datetime.now()
+        logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
+        model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
+
+        model = susie_tree(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+
+        seed_everything(args.seed, workers=True)
+        #set deterministic=True for reproducibility
+
         model.train(
             args.EPOCHS,
             check_val_every_n_epoch=args.check_val_every_n_epoch,
