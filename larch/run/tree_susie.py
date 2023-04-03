@@ -29,18 +29,19 @@ def main():
                         help='interval to perform evalutions', default=1)
     parser.add_argument('--data_file', help='filepath to h5ad file', default='data/sim_tree.h5ad')
     parser.add_argument('--data_id', help='data id', default='sim_data')
+    parser.add_argument('--out_dir', help='directory for output files', default='models')
     args = parser.parse_args()
     print(args)
 
     model_id = f"susie_tree_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
-    if os.path.exists(os.path.join("models", model_id)):
+    if os.path.exists(os.path.join(args.out_dir, model_id)):
         print("Model already exists, skip training")
-        print(f"Model saved at:", os.path.join("models", model_id))
+        print(f"Model saved at:", os.path.join(args.out_dir, model_id))
     else:
         print("Model does not exist, training new model")
-        
+
         #%%
         adata = sc.read(args.data_file)
         adata.layers["counts"] = csr_matrix(adata.X).copy()
@@ -64,17 +65,17 @@ def main():
             deterministic=True,
             **model_kwargs,
             )
-        model.save(os.path.join("models", model_id), overwrite=True, save_anndata=False)
-        print(f"Model saved at:", os.path.join("models", model_id))
+        model.save(os.path.join(args.out_dir, model_id), overwrite=True, save_anndata=False)
+        print(f"Model saved at:", os.path.join(args.out_dir, model_id))
     #%% save output
     # spike, slab, standard deviation
         print("---Saving global parameters: spike, slab, standard deviation---\n")
-        model.get_parameters(save_dir = os.path.join("models", model_id), overwrite = False)
+        model.get_parameters(save_dir = os.path.join(args.out_dir, model_id), overwrite = False)
         topics_np = model.get_latent_representation(deterministic=True, output_softmax_z=True)
         # topic proportions (after softmax)
         print("---Saving topic proportions (after softmax)---\n")
         topics_df = pd.DataFrame(topics_np, index= model.adata.obs.index, columns = ['topic_' + str(j) for j in range(topics_np.shape[1])])
-        topics_df.to_csv(os.path.join("models", model_id,"topics.csv"))
+        topics_df.to_csv(os.path.join(args.out_dir, model_id,"topics.csv"))
 
 if __name__ == "__main__":
     main()
