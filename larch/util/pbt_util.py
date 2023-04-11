@@ -11,7 +11,7 @@ def num_pbt_nodes(kk):
     return int(2**tree_depth - 1) # number of tree nodes
 
 def pbt_nodes_to_depth(N):
-    return (math.log2(N + 1)).astype(int)
+    return int(math.log2(N + 1))
 
 #' @param D tree depth
 def pbt_depth_to_leaves(D):
@@ -50,3 +50,18 @@ def pbt_adj(D, _signed = False):
 #X = torch.rand(7,3)
 #X
 #torch.mm(A.to_dense(), X)
+
+# 1 if node j is parent of node i, 0 otherwise
+def pbt_parent(D):
+    if D < 2: return torch.zeros(1)
+    _N = 2**D - 1
+
+    _elem = torch.ones(_N - 1)
+    _row = torch.arange(start = 1, end = _N)
+    _col = torch.floor((_row - 1) / 2)
+
+    out = torch.sparse_coo_tensor(torch.stack([_row, _col], 0), _elem, size=(_N, _N))
+    
+    out = out.to_dense()
+
+    return out.numpy()
