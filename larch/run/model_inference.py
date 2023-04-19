@@ -5,6 +5,7 @@ import argparse
 import torch
 import pickle
 from larch.util.modelhub import tree_spike_slab
+from larch.util.util import setup_anndata
 
 def main():
     parser = argparse.ArgumentParser(description='Inference parameters')
@@ -16,11 +17,16 @@ def main():
     print(args)
 
     test_data = sc.read(args.test_data_file)
-    model = tree_spike_slab()
+    test_data.layers["counts"] = csr_matrix(test_data.X).copy()
+    setup_anndata(test_data, layer="counts")
+
+    model = tree_spike_slab(test_data)
+    print("model loaded")
     with open(args.model_file, "rb") as fp:
         model.load_state_dict(pickle.load(fp))
 
-    test_theta = model.get_latent_representation(adata, deterministic=True, output_softmax_z=True)
+    print("getting latent representation of test data")
+    test_theta = model.get_latent_representation(test_data, deterministic=True, output_softmax_z=True)
 
     print("---Saving topic proportions (after softmax)---\n")
     topics_df = pd.DataFrame(test_theta, index= test_data.obs.index, columns = ['topic_' + str(j) for j in range(topics_np.shape[1])])
