@@ -4,6 +4,7 @@ import pandas as pd
 import argparse
 import torch
 import pickle
+from scipy.sparse import csr_matrix
 from larch.util.modelhub import tree_spike_slab
 from larch.util.util import setup_anndata
 
