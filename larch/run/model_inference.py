@@ -17,7 +17,7 @@ def main():
 
     test_data = sc.read(args.test_data_file)
     model = tree_spike_slab()
-    with open(args.model_flie", "rb") as fp:
+    with open(args.model_file, "rb") as fp:
         model.load_state_dict(pickle.load(fp))
 
     test_theta = model.get_latent_representation(adata, deterministic=True, output_softmax_z=True)
