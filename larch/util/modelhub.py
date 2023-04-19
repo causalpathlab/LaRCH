@@ -1,4 +1,4 @@
-import logging
+gimport logging
 import os
 from typing import List, Optional, Union
 import torch
@@ -255,6 +255,9 @@ class tree_spike_slab(BaseModelClass):
         model_save_path = os.path.join(dir_path, "model_params.pt")
 
         torch.save(self.module.state_dict(), model_save_path)
+
+    def load_state_dict(fp):
+        self.module.load_state_dict(fp)
 
 class spike_slab(BaseModelClass):
     """
