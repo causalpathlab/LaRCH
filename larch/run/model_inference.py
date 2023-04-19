@@ -3,6 +3,8 @@ import scanpy as sc
 import pandas as pd
 import argparse
 import torch
+import pickle
+from larch.util.modelhub import tree_spike_slab
 
 def main():
     parser = argparse.ArgumentParser(description='Inference parameters')
@@ -14,7 +16,9 @@ def main():
     print(args)
 
     test_data = sc.read(args.test_data_file)
-    model = torch.load(args.model_file)
+    model = tree_spike_slab()
+    with open(args.model_flie", "rb") as fp:
+        model.load_state_dict(pickle.load(fp))
 
     test_theta = model.get_latent_representation(adata, deterministic=True, output_softmax_z=True)
 
