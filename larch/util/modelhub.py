@@ -256,8 +256,8 @@ class tree_spike_slab(BaseModelClass):
 
         torch.save(self.module.state_dict(), model_save_path)
 
-    def load_state_dict(fp):
-        self.module.load_state_dict(fp)
+    def load_state_dict(self, state): 
+        self.module.load_state_dict(state)
 
 class spike_slab(BaseModelClass):
     """
