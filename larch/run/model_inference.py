@@ -11,7 +11,7 @@ from larch.util.util import setup_anndata
 def main():
     parser = argparse.ArgumentParser(description='Inference parameters')
     parser.add_argument('--model_file', help='path to model file', default='model_params.pt')
-    parser.add_argument('--tree_depth', help='Depth of tree of original model', default=5)
+    parser.add_argument('--tree_depth', help='Depth of tree of original model', type = int, default=5)
     parser.add_argument('--test_data_file', help='path to data file to perform inference on', default='data/sim_data.h5ad')
     parser.add_argument('--out_dir', help='path to save output file', default='data')
 
