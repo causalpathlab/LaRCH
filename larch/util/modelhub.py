@@ -756,6 +756,7 @@ class tree_stick_slab(BaseModelClass):
 
         self.adata = adata_seq
         self.tree_depth = tree_depth
+        print(self.adata.n_vars)
         self.module = tree_stick_slab_module(
             n_genes = self.adata.n_vars,
             tree_depth = self.tree_depth,
