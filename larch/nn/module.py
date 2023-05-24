@@ -604,14 +604,14 @@ class tree_stick_slab_module(tree_spike_slab_module):
         kl_weight_beta: float = 1.0,
     ):
         super().__init__(
-            n_genes: int,
-            tree_depth: int = 3,
-            n_layers_encoder_individual: int = 2,
-            dim_hidden_encoder: int = 128,
-            log_variational: bool = True,
-            alpha0_rho: float = 0.1,
-            kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,
+            n_genes,
+            tree_depth,
+            n_layers_encoder_individual,
+            dim_hidden_encoder,
+            log_variational,
+            alpha0_rho,
+            kl_weight,
+            kl_weight_beta,
         )
 
         self.decoder = StickTreeDecoder(
