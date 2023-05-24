@@ -603,22 +603,15 @@ class tree_stick_slab_module(tree_spike_slab_module):
         kl_weight: float = 1.0,
         kl_weight_beta: float = 1.0,
     ):
-        super().__init__()
-
-        self.n_input = n_genes
-        self.n_latent = 2 ** (tree_depth - 1)
-        self.log_variational = log_variational
-        self.alpha0_rho = alpha0_rho
-        self.kl_weight = kl_weight
-        self.kl_weight_beta = kl_weight_beta
-        self.tree_depth = tree_depth
-
-        self.z_encoder = BayesianETMEncoder(
-            n_input = self.n_input,
-            n_output = self.n_latent,
-            n_hidden = dim_hidden_encoder,
-            n_layers_individual = n_layers_encoder_individual,
-            log_variational = self.log_variational
+        super().__init__(
+            n_genes: int,
+            tree_depth: int = 3,
+            n_layers_encoder_individual: int = 2,
+            dim_hidden_encoder: int = 128,
+            log_variational: bool = True,
+            alpha0_rho: float = 0.1,
+            kl_weight: float = 1.0,
+            kl_weight_beta: float = 1.0,
         )
 
         self.decoder = StickTreeDecoder(
