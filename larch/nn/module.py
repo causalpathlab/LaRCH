@@ -587,7 +587,7 @@ class susie_tree_module(BaseModuleClass):
                             kl_rho = rho_kl,
                             kl_delta = torch.Tensor(0))
 
-class tree_stick_slab_module(BaseModuleClass):
+class tree_stick_slab_module(tree_spike_slab_module):
     """
     Tree VAE with stick breaking pip
     """
