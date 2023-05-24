@@ -606,7 +606,7 @@ class tree_stick_slab_module(BaseModuleClass):
         super().__init__()
 
         self.n_input = n_genes
-        self.n_latend = 2 ** (tree_depth - 1)
+        self.n_latent = 2 ** (tree_depth - 1)
         self.log_variational = log_variational
         self.alpha0_rho = alpha0_rho
         self.kl_weight = kl_weight
