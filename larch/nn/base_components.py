@@ -242,57 +242,44 @@ class BayesianETMEncoder(nn.Module):
 
         return q_m, q_v, latent
 
-class TreeDecoder(nn.Module):
+class SpikeSlabDecoder(nn.Module):
     """
-    Decoder for Tree ETM
+    Decoder for spike slab
     """
     def __init__(
         self,
-        #n_input: int,
+        n_input: int,
         n_output: int,
         pip0 = 0.1,
         v0 = 1,
-        tree_depth = 3,
     ):
         super().__init__()
 
         ## dimensions
         self.n_output = n_output # genes
-        self.tree_depth = tree_depth # tree depth
-        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
-        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
-        # adjaency matrix for binay tree
-        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
+        self.n_input = n_input # topics
         ## hyper-parameters
         self.logit_0 = nn.Parameter(torch.logit(torch.ones(1)* pip0, eps=1e-6), requires_grad = False)
         self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
         ## model parameters
-        self.slab_mean = nn.Parameter(torch.randn(self.num_tree_nodes, n_output) * torch.sqrt(torch.ones(1) * v0))
-        self.slab_lnvar = nn.Parameter(torch.ones(self.num_tree_nodes, n_output) * torch.log(torch.ones(1) * v0))
-        self.spike_logit = nn.Parameter(torch.zeros(self.num_tree_nodes, n_output) * self.logit_0)
+        self.slab_mean = nn.Parameter(torch.randn(n_input, n_output) * torch.sqrt(torch.ones(1) * v0))
+        self.slab_lnvar = nn.Parameter(torch.ones(n_input, n_output) * torch.log(torch.ones(1) * v0))
+        self.spike_logit = nn.Parameter(torch.zeros(n_input, n_output) * self.logit_0)
         # helper functions
         self.log_softmax = nn.LogSoftmax(dim=-1)
-
 
     def forward(
         self,
         z: torch.Tensor,
     ):
         theta = self.soft_max(z)
-        rho = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
-        beta = torch.mm(self.A, self.safe_exp(rho))
-        aa = torch.mm(theta, beta)
+        beta = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
+        rho = self.safe_exp(beta)
+        aa = torch.mm(theta, rho)
 
         rho_kl = self.sparse_kl_loss(self.logit_0, self.lnvar_0, self.spike_logit, self.slab_mean, self.slab_lnvar)
 
-        return rho, rho_kl, theta, beta, aa
-
-    def get_rho(
-        self,
-    ):
-        rho = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
-
-        return rho
+        return beta, rho_kl, theta, rho, aa
 
     def get_beta(self,
         spike_logit: torch.Tensor,
@@ -338,44 +325,110 @@ class TreeDecoder(nn.Module):
         ## Combine both logit and Gaussian KL
         return torch.sum(kl_pip + pip_hat * kl_g) # return a number sum over [N_topics, N_genes]
 
-class SpikeSlabDecoder(TreeDecoder):
+class TreeDecoder(SpikeSlabDecoder):
     """
-    Decoder for spike slab
+    Decoder for Tree ETM
     """
     def __init__(
         self,
-        n_input: int,
         n_output: int,
         pip0 = 0.1,
         v0 = 1,
+        tree_depth = 3,
     ):
-        super().__init__()
-
         ## dimensions
-        self.n_output = n_output # genes
-        self.n_input = n_input # topics
-        ## hyper-parameters
-        self.logit_0 = nn.Parameter(torch.logit(torch.ones(1)* pip0, eps=1e-6), requires_grad = False)
-        self.lnvar_0 = nn.Parameter(torch.log(torch.ones(1) * v0), requires_grad = False)
-        ## model parameters
-        self.slab_mean = nn.Parameter(torch.randn(n_input, n_output) * torch.sqrt(torch.ones(1) * v0))
-        self.slab_lnvar = nn.Parameter(torch.ones(n_input, n_output) * torch.log(torch.ones(1) * v0))
-        self.spike_logit = nn.Parameter(torch.zeros(n_input, n_output) * self.logit_0)
-        # helper functions
-        self.log_softmax = nn.LogSoftmax(dim=-1)
+        self.tree_depth = tree_depth # tree depth
+        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
+        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
+
+        super().__init__(
+            n_output=n_output,
+            n_input=self.num_tree_nodes,
+            pip0=pip0,
+            v0=v0
+        )
+
+        # adjaency matrix for binay tree
+        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
 
     def forward(
         self,
         z: torch.Tensor,
     ):
         theta = self.soft_max(z)
-        rho = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
-        beta = self.safe_exp(rho)
-        aa = torch.mm(theta, beta)
+        beta = self.get_beta(self.spike_logit, self.slab_mean, self.slab_lnvar)
+        rho = torch.mm(self.A, self.safe_exp(beta))
+        aa = torch.mm(theta, rho)
 
         rho_kl = self.sparse_kl_loss(self.logit_0, self.lnvar_0, self.spike_logit, self.slab_mean, self.slab_lnvar)
 
-        return rho, rho_kl, theta, beta, aa
+        return beta, rho_kl, theta, rho, aa
+
+class StickTreeDecoder(TreeDecoder):
+    """
+    Decoder for Tree ETM with added stick breaking restriction on pip
+    """
+
+    def __init__(
+        self,
+        n_output: int,
+        alpha0 = 0.1,
+        v0 = 1,
+        tree_depth = 3,
+    ):
+        super().__init__(
+            self,
+            n_output = n_output,
+            pip0 = alpha0,
+            v0 = v0,
+            tree_depth = tree_depth
+        )
+
+    def get_pip(
+        self,
+        spike_logit: torch.Tensor
+    ):
+        sftpls_logit = nn.functional.softplus(logit)
+
+        return torch.sigmoid(logit) * torch.exp(-torch.cumsum(sftpls_logit, dim = 0) + sftpls_logit)
+
+    def get_beta(self,
+        spike_logit: torch.Tensor,
+        slab_mean: torch.Tensor,
+        slab_lnvar: torch.Tensor
+    ):
+        pip = self.get_pip(spike_logit)
+        mean = slab_mean * pip
+        var = pip * (1 - pip) * torch.square(slab_mean)
+        var = var + pip * torch.exp(slab_lnvar)
+        eps = torch.randn_like(var)
+
+        return mean + eps * torch.sqrt(var)
+
+    def sparse_kl_loss(
+        self,
+        logit_0,
+        lnvar_0,
+        spike_logit,
+        slab_mean,
+        slab_lnvar,
+    ):
+        ## PIP KL between α and α0
+        ## α * ln(α / α0) + (1-α) * ln(1-α/1-α0)
+        ## = α * ln(α / 1-α) + ln(1-α) +
+        ##   α * ln(1-α0 / α0) - ln(1-α0)
+        ## = sigmoid(logit) * logit - softplus(logit)
+        ##   - sigmoid(logit) * logit0 + softplus(logit0)
+        alpha_hat = torch.sigmoid(spike_logit)
+        kl_alpha_1 = alpha_hat * (spike_logit - logit_0)
+        kl_alpha = kl_alpha_1 - nn.functional.softplus(spike_logit) + nn.functional.softplus(logit_0)
+
+        ## Gaussian KL between N(μ,ν) and N(0, v0)
+        sq_term = torch.exp(-lnvar_0) * (torch.square(slab_mean) + torch.exp(slab_lnvar))
+        kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
+
+        ## Combine both logit and Gaussian KL
+        return torch.sum(kl_alpha + alpha_hat * kl_g) # return a number sum over [N_topics, N_genes]
 
 class MaskedLinear(nn.Linear):
     """

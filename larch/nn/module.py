@@ -5,7 +5,7 @@ from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
 from typing import Tuple
 from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
-from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
+from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, StickTreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
 from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
@@ -92,7 +92,7 @@ class tree_spike_slab_module(BaseModuleClass):
     @auto_move_data
     def generative(self, z) -> dict:
 
-        rho, rho_kl, theta, beta, aa  = self.decoder(z)
+        beta, rho_kl, theta, rho, aa  = self.decoder(z)
         return dict(rho = rho, rho_kl = rho_kl, theta = theta, beta = beta, aa = aa)
 
     def sample_from_posterior_z(
@@ -586,3 +586,43 @@ class susie_tree_module(BaseModuleClass):
                             kl_beta = kl_divergence_beta,
                             kl_rho = rho_kl,
                             kl_delta = torch.Tensor(0))
+
+class tree_stick_slab_module(BaseModuleClass):
+    """
+    Tree VAE with stick breaking pip
+    """
+
+    def __init__(
+        self,
+        n_genes: int,
+        tree_depth: int = 3,
+        n_layers_encoder_individual: int = 2,
+        dim_hidden_encoder: int = 128,
+        log_variational: bool = True,
+        alpha0_rho: float = 0.1,
+        kl_weight: float = 1.0,
+        kl_weight_beta: float = 1.0,
+    ):
+        super().__init__()
+
+        self.n_input = n_genes
+        self.n_latend = 2 ** (tree_depth - 1)
+        self.log_variational = log_variational
+        self.alpha0_rho = alpha0_rho
+        self.kl_weight = kl_weight
+        self.kl_weight_beta = kl_weight_beta
+        self.tree_depth = tree_depth
+
+        self.z_encoder = BayesianETMEncoder(
+            n_input = self.n_input,
+            n_output = self.n_latent,
+            n_hidden = dim_hidden_encoder,
+            n_layers_individual = n_layers_encoder_individual,
+            log_variational = self.log_variational
+        )
+
+        self.decoder = StickTreeDecoder(
+            self.n_input,
+            alpha0 = self.alpha0_rho,
+            tree_depth = self.tree_depth
+        )
