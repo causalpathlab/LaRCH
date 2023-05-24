@@ -614,6 +614,8 @@ class tree_stick_slab_module(tree_spike_slab_module):
             kl_weight_beta,
         )
 
+        self.alpha0_rho = alpha0_rho
+
         self.decoder = StickTreeDecoder(
             self.n_input,
             alpha0 = self.alpha0_rho,
