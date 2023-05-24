@@ -342,10 +342,7 @@ class TreeDecoder(SpikeSlabDecoder):
         self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
 
         super().__init__(
-            n_output=n_output,
             n_input=self.num_tree_nodes,
-            pip0=pip0,
-            v0=v0
         )
 
         # adjaency matrix for binay tree
@@ -376,13 +373,7 @@ class StickTreeDecoder(TreeDecoder):
         v0 = 1,
         tree_depth = 3,
     ):
-        super().__init__(
-            self,
-            n_output = n_output,
-            pip0 = alpha0,
-            v0 = v0,
-            tree_depth = tree_depth
-        )
+        super().__init__()
 
     def get_pip(
         self,
