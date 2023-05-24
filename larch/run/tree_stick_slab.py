@@ -33,7 +33,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model_id = f"tree_spike_slab_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+    model_id = f"tree_stick_slab_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
     if os.path.exists(os.path.join(args.out_dir, model_id)):
