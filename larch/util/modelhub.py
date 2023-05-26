@@ -7,7 +7,7 @@ import numpy as np
 from anndata import AnnData
 from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
 from larch.nn.TrainingPlan import TrainingPlan
-from larch.nn.module import tree_spike_slab_module, BALSAM_module, susie_tree_module, tree_stick_slab_module
+from larch.nn.module import TreeSpikeSlabModule, BALSAMModule, SuSiETreeModule, TreeStickSlabModule
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +27,7 @@ class tree_spike_slab(BaseModelClass):
     tree_depth
         depth of the tree
     **model_kwargs
-        Keyword args for :class:`~module.tree_spike_slab_module`
+        Keyword args for :class:`~module.TreeSpikeSlabModule`
 
     Examples
     --------
@@ -42,7 +42,7 @@ class tree_spike_slab(BaseModelClass):
         super(tree_spike_slab, self).__init__()
         self.adata = adata_seq
         self.tree_depth = tree_depth
-        self.module = tree_spike_slab_module(
+        self.module = TreeSpikeSlabModule(
             n_genes = self.adata.n_vars,
             #n_latent=n_latent,
             tree_depth = self.tree_depth,
@@ -274,7 +274,7 @@ class spike_slab(BaseModelClass):
         self.n_latent = n_latent
         self.adata = adata_seq
 
-        self.module = BALSAM_module(
+        self.module = BALSAMModule(
             n_genes = self.adata.n_vars,
             n_latent=n_latent,
             **model_kwargs,
@@ -515,7 +515,7 @@ class susie_tree(BaseModelClass):
         super(susie_tree, self).__init__()
         self.adata = adata_seq
         self.tree_depth = tree_depth
-        self.module = susie_tree_module(
+        self.module = SuSiETreeModule(
             n_genes = self.adata.n_vars,
             #n_latent=n_latent,
             tree_depth = self.tree_depth,
@@ -743,7 +743,7 @@ class tree_stick_slab(BaseModelClass):
     tree_depth
         depth of the tree
     **model_kwargs
-        Keyword args for :class:`~module.tree_stick_slab_module`
+        Keyword args for :class:`~module.TreeStickSlabModule`
     """
 
     def __init__(
@@ -756,7 +756,7 @@ class tree_stick_slab(BaseModelClass):
 
         self.adata = adata_seq
         self.tree_depth = tree_depth
-        self.module = tree_stick_slab_module(
+        self.module = TreeStickSlabModule(
             n_genes = self.adata.n_vars,
             tree_depth = self.tree_depth,
             **model_kwargs)

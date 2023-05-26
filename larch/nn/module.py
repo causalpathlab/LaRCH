@@ -10,7 +10,7 @@ from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
 
-class tree_spike_slab_module(BaseModuleClass):
+class TreeSpikeSlabModule(BaseModuleClass):
     """
     Tree VAE
     """
@@ -204,7 +204,7 @@ class tree_spike_slab_module(BaseModuleClass):
                             kl_rho = rho_kl,
                             kl_delta = torch.Tensor(0))
 
-class BALSAM_module(BaseModuleClass):
+class BALSAMModule(BaseModuleClass):
     """
     The BETM module
     """
@@ -395,7 +395,7 @@ class BALSAM_module(BaseModuleClass):
                             kl_rho = rho_kl,
                             kl_delta = torch.Tensor(0))
 
-class susie_tree_module(BaseModuleClass):
+class SuSiETreeModule(BaseModuleClass):
     """
     Tree VAE
     """
@@ -587,7 +587,7 @@ class susie_tree_module(BaseModuleClass):
                             kl_rho = rho_kl,
                             kl_delta = torch.Tensor(0))
 
-class tree_stick_slab_module(tree_spike_slab_module):
+class TreeStickSlabModule(TreeSpikeSlabModule):
     """
     Tree VAE with stick breaking pip
     """
@@ -622,7 +622,7 @@ class tree_stick_slab_module(tree_spike_slab_module):
             tree_depth = self.tree_depth
         )
 
-class tree_softmax_slab_module(tree_spike_slab_module):
+class TreeSoftmaxSlabModule(TreeSpikeSlabModule):
     """
     Tree VAE with softmax regularization on pip
     """
