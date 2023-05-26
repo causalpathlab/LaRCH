@@ -434,22 +434,21 @@ class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
     Decoder for Spike Slab Tree model,
     with a softmax regularizer on the spike components
     """
-    def __init__():
-        ## dimensions
-        self.tree_depth = tree_depth # tree depth
-        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
-        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
-
-        super().__init__(
-            n_output=n_output,
-            n_input=self.num_tree_nodes,
-            pip0=pip0,
-            v0=v0
-        )
-
-        # adjaency matrix for binay tree
-        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
-
+    def __init__(
+        self,
+        n_output: int,
+        alpha0 = 0.1,
+        v0 = 1,
+        tree_depth = 3,
+    ):
+):
+    super().__init__(
+        n_output = n_output,
+        pip0 = alpha0,
+        v0 = v0,
+        tree_depth = tree_depth
+    )
+    
         self.cw_log_softmax = nn.LogSoftmax(dim = 0)
 
     def column_wise_soft_max(self,
