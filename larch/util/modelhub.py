@@ -905,7 +905,7 @@ class TreeStickSlab(BaseModelClass):
         logit = torch.logit(
             torch.sigmoid(alpha_logit) *
             torch.exp(torch.clamp(-torch.cumsum(nn.functional.softplus(alpha_logit), dim = 0)) *
-            (1 + torch.exp(alpha_logit)), -5, 5)
+            (1 + torch.exp(alpha_logit)), min = -5, max = 5)
         )
 
         np.savetxt(os.path.join(
