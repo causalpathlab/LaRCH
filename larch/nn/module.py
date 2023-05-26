@@ -5,7 +5,7 @@ from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
 from typing import Tuple
 from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
-from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, StickTreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder
+from larch.nn.base_components import BayesianETMEncoder, TreeDecoder, StickTreeDecoder, BALSAMDecoder, BALSAMEncoder, SusieDecoder, SoftmaxSpikeSlabTreeDecoder
 from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
@@ -617,6 +617,41 @@ class tree_stick_slab_module(tree_spike_slab_module):
         self.alpha0_rho = alpha0_rho
 
         self.decoder = StickTreeDecoder(
+            self.n_input,
+            alpha0 = self.alpha0_rho,
+            tree_depth = self.tree_depth
+        )
+
+class tree_softmax_slab_module(tree_spike_slab_module):
+    """
+    Tree VAE with softmax regularization on pip
+    """
+
+    def __init__(
+        self,
+        n_genes: int,
+        tree_depth: int = 3,
+        n_layers_encoder_individual: int = 2,
+        dim_hidden_encoder: int = 128,
+        log_variational: bool = True,
+        alpha0_rho: float = 0.1,
+        kl_weight: float = 1.0,
+        kl_weight_beta: float = 1.0,
+    ):
+        super().__init__(
+            n_genes,
+            tree_depth,
+            n_layers_encoder_individual,
+            dim_hidden_encoder,
+            log_variational,
+            alpha0_rho,
+            kl_weight,
+            kl_weight_beta,
+        )
+
+        self.alpha0_rho = alpha0_rho
+
+        self.decoder = SoftmaxSpikeSlabTreeDecoder(
             self.n_input,
             alpha0 = self.alpha0_rho,
             tree_depth = self.tree_depth
