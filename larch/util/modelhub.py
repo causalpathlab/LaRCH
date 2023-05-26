@@ -15,7 +15,7 @@ def _unpack_tensors(tensors):
     x = tensors["X"].squeeze_(0)
     return x
 
-class tree_spike_slab(BaseModelClass):
+class TreeSpikeSlab(BaseModelClass):
     """
     tree spike slab
 
@@ -39,7 +39,7 @@ class tree_spike_slab(BaseModelClass):
         tree_depth: int = 3,
         **model_kwargs,
     ):
-        super(tree_spike_slab, self).__init__()
+        super().__init__()
         self.adata = adata_seq
         self.tree_depth = tree_depth
         self.module = TreeSpikeSlabModule(
@@ -260,7 +260,7 @@ class tree_spike_slab(BaseModelClass):
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
-class spike_slab(BaseModelClass):
+class SpikeSlab(BaseModelClass):
     """
     """
 
@@ -270,7 +270,7 @@ class spike_slab(BaseModelClass):
         n_latent: int = 32,
         **model_kwargs,
     ):
-        super(spike_slab, self).__init__()
+        super().__init__()
         self.n_latent = n_latent
         self.adata = adata_seq
 
@@ -488,7 +488,7 @@ class spike_slab(BaseModelClass):
 
         torch.save(self.module.state_dict(), model_save_path)
 
-class susie_tree(BaseModelClass):
+class SuSiETree(BaseModelClass):
     """
     susie_tree model for single-cell data.
 
@@ -512,7 +512,7 @@ class susie_tree(BaseModelClass):
         tree_depth: int = 3,
         **model_kwargs,
     ):
-        super(susie_tree, self).__init__()
+        super().__init__()
         self.adata = adata_seq
         self.tree_depth = tree_depth
         self.module = SuSiETreeModule(
@@ -523,7 +523,7 @@ class susie_tree(BaseModelClass):
         )
 
         self._model_summary_string = (
-            "tree_spike_slab with the following params:  n_genes: {}, tree_depth: {}"
+            "susie_tree with the following params:  n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
 
     def train(
@@ -731,7 +731,7 @@ class susie_tree(BaseModelClass):
 
         torch.save(self.module.state_dict(), model_save_path)
 
-class tree_stick_slab(BaseModelClass):
+class TreeStickSlab(BaseModelClass):
     """
     tree stick slab
 

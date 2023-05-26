@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from larch.util.modelhub import tree_spike_slab
+from larch.util.modelhub import TreeSpikeSlab
 
 def main():
     parser = argparse.ArgumentParser(description='Parameters for NN')
@@ -52,7 +52,7 @@ def main():
         logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = tree_spike_slab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+        model = TreeSpikeSlab(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
 
         seed_everything(args.seed, workers=True)
         #set deterministic=True for reproducibility

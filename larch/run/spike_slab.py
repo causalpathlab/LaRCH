@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from larch.util.modelhub import spike_slab
+from larch.util.modelhub import SpikeSlab
 
 def main():
     parser = argparse.ArgumentParser(description='Parameters for NN')

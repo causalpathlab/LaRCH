@@ -5,7 +5,7 @@ import argparse
 import torch
 import pickle
 from scipy.sparse import csr_matrix
-from larch.util.modelhub import tree_spike_slab
+from larch.util.modelhub import TreeSpikeSlab
 from larch.util.util import setup_anndata
 
 def main():
@@ -22,7 +22,7 @@ def main():
     test_data.layers["counts"] = csr_matrix(test_data.X).copy()
     setup_anndata(test_data, layer="counts")
 
-    model = tree_spike_slab(test_data, args.tree_depth)
+    model = TreeSpikeSlab(test_data, args.tree_depth)
     print("model loaded")
     model.load_state_dict(torch.load(args.model_file))
 

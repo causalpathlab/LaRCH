@@ -7,7 +7,7 @@ import argparse
 from pytorch_lightning.loggers import CSVLogger
 import datetime
 from pytorch_lightning import seed_everything
-from larch.util.modelhub import tree_stick_slab
+from larch.util.modelhub import TreeStickSlab
 
 def main():
     parser = argparse.ArgumentParser(description='Parameters for NN')
@@ -52,7 +52,7 @@ def main():
         logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = tree_stick_slab(adata, tree_depth = args.tree_depth, alpha0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+        model = TreeStickSlab(adata, tree_depth = args.tree_depth, alpha0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
 
         seed_everything(args.seed, workers=True)
         #set deterministic=True for reproducibility
