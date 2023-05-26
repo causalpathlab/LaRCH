@@ -752,7 +752,7 @@ class TreeStickSlab(BaseModelClass):
         tree_depth: int = 3,
         **model_kwargs,
     ):
-        super(tree_stick_slab, self).__init__()
+        super().__init__()
 
         self.adata = adata_seq
         self.tree_depth = tree_depth
