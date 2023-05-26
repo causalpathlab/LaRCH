@@ -418,7 +418,7 @@ class StickTreeDecoder(TreeDecoder):
         ##   α * ln(1-α0 / α0) - ln(1-α0)
         ## = sigmoid(logit) * logit - softplus(logit)
         ##   - sigmoid(logit) * logit0 + softplus(logit0)
-        alpha_hat = torch.sigmoid(spike_logit)
+        alpha_hat = self.get_pip(spike_logit)
         kl_alpha_1 = alpha_hat * (spike_logit - logit_0)
         kl_alpha = kl_alpha_1 - nn.functional.softplus(spike_logit) + nn.functional.softplus(logit_0)
 
@@ -428,6 +428,69 @@ class StickTreeDecoder(TreeDecoder):
 
         ## Combine both logit and Gaussian KL
         return torch.sum(kl_alpha + alpha_hat * kl_g) # return a number sum over [N_topics, N_genes]
+
+class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
+    """
+    Decoder for Spike Slab Tree model,
+    with a softmax regularizer on the spike components
+    """
+    def __init__():
+        ## dimensions
+        self.tree_depth = tree_depth # tree depth
+        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
+        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
+
+        super().__init__(
+            n_output=n_output,
+            n_input=self.num_tree_nodes,
+            pip0=pip0,
+            v0=v0
+        )
+
+        # adjaency matrix for binay tree
+        self.A = nn.Parameter(tree_util.pbt_adj(self.tree_depth).to_dense(),requires_grad = False)
+
+        self.cw_log_softmax = nn.LogSoftmax(dim = 0)
+
+    def column_wise_soft_max(self,
+        x: torch.Tensor
+    ):
+        return torch.exp(self.cw_log_softmax(x))
+
+    def get_beta(self,
+        spike_logit: torch.Tensor,
+        slab_mean: torch.Tensor,
+        slab_lnvar: torch.Tensor
+    ):
+        pip = self.column_wise_soft_max(spike_logit)
+        mean = slab_mean * pip
+        var = pip * (1 - pip) * torch.square(slab_mean)
+        var = var + pip * torch.exp(slab_lnvar)
+        eps = torch.randn_like(var)
+
+        return mean + eps * torch.sqrt(var)
+
+    def sparse_kl_loss(
+        self,
+        logit_0,
+        lnvar_0,
+        spike_logit,
+        slab_mean,
+        slab_lnvar,
+    ):
+        ## PIP KL between α and α0
+        ## α * ln(α)
+        ## = soft_max(logit) * log_softmax(logit)
+        alpha_hat = self.column_wise_soft_max(logit)
+        kl_alpha = alpha_hat * self.cw_log_softmax(logit)
+
+        ## Gaussian KL between N(μ,ν) and N(0, v0)
+        sq_term = torch.exp(-lnvar_0) * (torch.square(slab_mean) + torch.exp(slab_lnvar))
+        kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
+
+        ## Combine both logit and Gaussian KL
+        return torch.sum(kl_alpha + alpha_hat * kl_g) # return a number sum over [N_topics, N_genes]
+
 
 class MaskedLinear(nn.Linear):
     """
