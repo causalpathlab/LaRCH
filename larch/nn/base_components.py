@@ -389,7 +389,7 @@ class StickTreeDecoder(TreeDecoder):
     ):
         sftpls_logit = nn.functional.softplus(spike_logit)
 
-        return torch.sigmoid(spike_logit) * torch.exp(-torch.cumsum(sftpls_logit, dim = 0) + sftpls_logit)
+        return torch.sigmoid(spike_logit) * self.safe_exp(-torch.cumsum(sftpls_logit, dim = 0) + sftpls_logit, x_min = -5, x_max = 5)
 
     def get_beta(self,
         spike_logit: torch.Tensor,
