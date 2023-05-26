@@ -480,8 +480,8 @@ class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
         ## PIP KL between α and α0
         ## α * ln(α)
         ## = soft_max(logit) * log_softmax(logit)
-        alpha_hat = self.column_wise_soft_max(logit)
-        kl_alpha = alpha_hat * self.cw_log_softmax(logit)
+        alpha_hat = self.column_wise_soft_max(spike_logit)
+        kl_alpha = alpha_hat * self.cw_log_softmax(spike_logit)
 
         ## Gaussian KL between N(μ,ν) and N(0, v0)
         sq_term = torch.exp(-lnvar_0) * (torch.square(slab_mean) + torch.exp(slab_lnvar))
