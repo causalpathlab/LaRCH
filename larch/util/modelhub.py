@@ -7,7 +7,7 @@ import numpy as np
 from anndata import AnnData
 from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
 from larch.nn.TrainingPlan import TrainingPlan
-from larch.nn.module import TreeSpikeSlabModule, BALSAMModule, SuSiETreeModule, TreeStickSlabModule
+from larch.nn.module import TreeSpikeSlabModule, BALSAMModule, SuSiETreeModule, TreeStickSlabModule, TreeSoftmaxSlabModule
 
 logger = logging.getLogger(__name__)
 
