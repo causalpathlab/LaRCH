@@ -909,9 +909,12 @@ class TreeStickSlab(BaseModelClass):
         )
 
         np.savetxt(os.path.join(
-            save_dir, "model_parameters", "spike_logit_rho.txt"
+            save_dir, "model_parameters", "stick_spike_logit_rho.txt"
         ), logit.numpy())
 
+        np.savetxt(os.path.join(
+            save_dir, "model_parameters", "spike_logit_rho.txt"
+        ), decoder.spike_logit.cpu().numpy())
 
         np.savetxt(os.path.join(
             save_dir,"model_parameters", "slab_mean_rho.txt"

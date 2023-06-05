@@ -480,15 +480,15 @@ class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
         ## PIP KL between α and α0
         ## α * ln(α)
         ## = soft_max(logit) * log_softmax(logit)
-        alpha_hat = self.column_wise_soft_max(spike_logit)
-        kl_alpha = alpha_hat * self.cw_log_softmax(spike_logit)
+        pip_hat = self.column_wise_soft_max(spike_logit)
+        kl_pip = alpha_hat * self.cw_log_softmax(spike_logit)
 
         ## Gaussian KL between N(μ,ν) and N(0, v0)
         sq_term = torch.exp(-lnvar_0) * (torch.square(slab_mean) + torch.exp(slab_lnvar))
         kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
 
         ## Combine both logit and Gaussian KL
-        return torch.sum(kl_alpha + alpha_hat * kl_g) # return a number sum over [N_topics, N_genes]
+        return torch.sum(kl_pip + pip_hat * kl_g) # return a number sum over [N_topics, N_genes]
 
 
 class MaskedLinear(nn.Linear):
