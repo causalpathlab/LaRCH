@@ -202,6 +202,228 @@ class FCLayers(nn.Module):
                         x = layer(x)
         return x
 
+class MaskedLinear(nn.Linear):
+    """ 
+    same as Linear except has a configurable mask on the weights
+    """
+
+    def __init__(
+            self,
+            in_features,
+            out_features,
+            mask,
+            bias=True,):
+        super().__init__(in_features, out_features, bias)
+        self.register_buffer('mask', mask)
+
+    def forward(self, input):
+        if self.bias is None:
+            return F.linear(input, self.weight * self.mask)
+        else:
+            return F.linear(input, self.weight * self.mask, self.bias)
+
+    def __init__(
+            self,
+            n_in: int,
+            n_out: int,
+            mask: torch.Tensor = None,
+            mask_first: bool = True,
+            n_cat_list: Iterable[int] = None,
+            n_layer: int = 1,
+            n_hidden: int = 128,
+            dropout_rate: float = 0.1,
+            use_batch_norm: bool = True,
+            use_layer_norm: bool = False,
+            use_activation: bool = True,
+            bias: bool = True,
+            inject_covariates: bool = True,
+            activation_fn: nn.Module = nn.ReLU,):
+        super().__init__(
+            n_in=n_in,
+            n_out=n_out,
+            n_cat_list=n_cat_list,
+            n_layers=n_layers,
+            n_hidden=n_hidden,
+            dropout_rate=dropout_rate,
+            use_batch_norm=use_batch_norm,
+            use_layer_norm=use_layer_norm,
+            use_activation=use_activation,
+            bias=bias,
+            inject_covariates=inject_covariates,
+            activation_fn=activation_fn
+        )
+
+        self.mask = mask ## out_features, in_features
+
+        # if mask is None:
+        #     print("No mask input, use all fully connected layers")
+
+        if mask is not None:
+            if mask_first:
+                layers_dim = ([n_in]
+                    + [mask.shape[0]]
+                    + (n_layers - 1) * [n_hidden]
+                    + [n_out])
+            else:
+                layers_dim = ([n_in]
+                    + (n_layers - 1) * [n_hidden]
+                    + [mask.shape[0]]
+                    + [n_out])
+        else:
+            layers_dim = ([n_in]
+                + (n_layers - 1) * [n_hidden]
+                + [n_out])
+
+        if n_cat_list is not None:
+            # n_cat = 1 will be ignored
+            self.n_cat_list = [n_cat if n_cat > 1 else 0 for n_cat in n_cat_list]
+        else:
+            self.n_cat_list = []
+
+        cat_dim = sum(self.n_cat_list)
+
+        # concatinate one hot encoding to mask if available
+        if cat_dim > 0:
+            mask_input = torch.cat(
+                (self.mask, torch.ones(cat_dim, self.mask.shape[1])),
+                dim=0)
+        else:
+            mask_input = self.mask
+
+        self.fc_layers = nn.Sequential(
+            collections.OrderedDict(
+                [
+                    (
+                        "Layer {}".format(i),
+                        nn.Sequential(
+                            nn.Linear(
+                                n_in + cat_dim * self.inject_into_layer(i),
+                                n_out,
+                                bias=bias,
+                            ),
+                            # non-default params come from defaults in original Tensorflow implementation
+                            nn.BatchNorm1d(n_out, momentum=0.01, eps=0.001)
+                            if use_batch_norm else None,
+                            nn.LayerNorm(n_out, elementwise_affine=False)
+                            if use_layer_norm else None,
+                            activation_fn() if use_activation else None,
+                            nn.Dropout(p=dropout_rate) 
+                            if dropout_rate > 0 else None,
+                        ),
+                    )
+                    for i, (n_in, n_out) in enumerate(
+                        zip(layers_dim[:-1], layers_dim[1:])
+                    )
+                ]
+            )
+        )
+
+        if mask is not None:
+            if mask_first:
+                # change the first layer to be MaskedLinear
+                self.fc_layers[0] = nn.Sequential(
+                    MaskedLinear(
+                        layers_dim[0] + cat_dim * self.inject_into_layer(0),
+                        layers_dim[1],
+                        mask_input,
+                        bias=bias,
+                    ),
+                    # non-default params come from defaults in original Tensorflow implementation
+                    nn.BatchNorm1d(layers_dim[1], momentum=0.01, eps=0.001)
+                    if use_batch_norm else None,
+                    nn.LayerNorm(layers_dim[1], elementwise_affine=False)
+                    if use_layer_norm else None,
+                    activation_fn() if use_activation else None,
+                    nn.Dropout(p=dropout_rate)
+                    if dropout_rate > 0 else None,
+                )
+            else:
+                # change the last layer to be Masked Linear
+                self.fc_layers[-1] = nn.Sequential(
+                    MaskedLinear(
+                        layers_dim[-2] + cat_dim * self.inject_into_layer(0),
+                        layers_dim[-1],
+                        torch.transpose(mask_input, 0, 1),
+                        bias=bias
+
+                    ),
+                    # non-default params come from defaults in original TensorFlow implementation
+                    nn.BatchNorm1d(layers_dim[-1], momentum=0.01, eps=0.001)
+                    if use_batch_norm else None, 
+                    nn.LayerNorm(layers_dim[-1], elementwise_affine=False)
+                    if use_layer_norm else None,
+                    activation_fn() if use_activation else None,
+                    nn.Dropout(p=dropout_rate) 
+                    if dropout_rate > 0 else None,
+                )
+
+    def forward(self, x: torch.Tensor, *cat_list: int):
+        """
+        Forward computation on ``x``.
+        Parameters
+        ----------
+        x
+            tensor of values with shape ``(n_in,)``
+        cat_list
+            list of category membership(s) for this sample
+        x: torch.Tensor
+        Returns
+        -------
+        py:class:`torch.Tensor`
+            tensor of shape ``(n_out,)``
+        """
+        one_hot_cat_list = [] # for generality in this list many indices useless.
+
+        if len(self.n_cat_list) > len(cat_list):
+            raise ValueError(
+                "nb. categorical args provided don't match init. params."
+            )
+
+        for n_cat, cat in zip(self.n_cat_list, cat_list):
+            if n_cat and cat is None:
+                raise ValueError(
+                    "cat not provided while n_cat != 0 in init. params."
+                )
+            if n_cat > 1: # n_cat = 1 ignored - no additional information
+                if cat.size(1) != n_cat:
+                    one_hot_cat = one_hot(cat, n_cat)
+                else:
+                    one_hot_cat = cat # cat has already been one_hot encoded
+                one_hot_cat_list += [one_hot_cat]
+
+        for i, layers in enumerate(self.fc_layers):
+            for layer in layers:
+                if layer is not None:
+                    if isinstance(layer, nn.BatchNorm1d):
+                        if x.dim() == 3:
+                            x = torch.cat(
+                                [(layer(slice_x)).unsqueeze(0) for slice_x in x],
+                                dim=0
+                            )
+                        else:
+                            x = layer(x)
+                    else:
+                        if ((isinstance(layer, nn.Linear) 
+                                or isinstance(layer, MaskedLinear))
+                            and self.inject_into_layer(i)):
+                            if x.dim() == 3:
+                                one_hot_cat_list_layer = [
+                                    o.unsqueeze(0).expand(
+                                        (x.size(0), o.size(0), o.size(1))
+                                    )
+                                    for o in one_hot_cat_list
+                                ]
+                            else:
+                                one_hot_cat_list_layer = one_hot_cat_list
+
+                            x = torch.cat(
+                                (x, *one_hot_cat_list_layer), 
+                                dim=-1
+                            )
+                        x = layer(x)
+
+        return x
+
 class BayesianETMEncoder(nn.Module):
     """
     BayesianETM Encoder
@@ -369,12 +591,15 @@ class SpikeSlabDecoder(BayesianETMDecoder):
 
         return beta, rho_kl, theta, rho, aa
 
+    def get_pip(self, spike_logit: torch.Tensor):
+        return torch.sigmoid(spike_logit)
+
     def get_beta(
             self,
             spike_logit: torch.Tensor,
             slab_mean: torch.Tensor,
             slab_lnvar: torch.Tensor,):
-        pip = torch.sigmoid(spike_logit)
+        pip = self.get_pip(spike_logit)
 
         mean = slab_mean * pip
         ## DOUBLE CHECK: is this calculation of var correct?
@@ -398,7 +623,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         ##   p * ln(1-p0 / p0) - ln(1-p0)
         ## = sigmoid(logit) * logit - softplus(logit)
         ##   - sigmoid(logit) * logit0 + softplus(logit0)
-        pip_hat = torch.sigmoid(spike_logit)
+        pip_hat = self.get_pip(spike_logit)
         kl_pip = pip_hat * (spike_logit - logit_0)
         kl_pip = (kl_pip 
             - nn.functional.softplus(spike_logit) 
@@ -488,19 +713,30 @@ class StickTreeDecoder(TreeDecoder):
                 -torch.cumsum(sftpls_logit, dim=0) + sftpls_logit,
                 x_min=-5, x_max=5))
 
-    def get_beta(
+class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
+    """
+    Decoder for Spike Slab Tree model,
+    with a softmax regularizer on the spike components
+    """
+
+    def __init__(
             self,
-            spike_logit: torch.Tensor,
-            slab_mean: torch.Tensor,
-            slab_lnvar: torch.Tensor,):
-        pip = self.get_pip(spike_logit)
+            n_output: int,
+            alpha0=0.1,
+            v0=1,
+            tree_depth=3,):
+        super().__init__(
+            n_output=n_output,
+            pip0=alpha0,
+            v0=v0,
+            tree_depth=tree_depth
+            )
 
-        mean = slab_mean * pip
-        var = pip * (1 - pip) * torch.square(slab_mean)
-        var = var + pip * torch.exp(slab_lnvar)
-        eps = torch.randn_like(var)
+        # Helper function: Column wise log softmax to get softmax across topics per gene
+        self.cw_log_softmax = nn.LogSoftmax(dim=0)
 
-        return mean + eps * torch.sqrt(var)
+    def get_pip(self, spike_logit: torch.Tensor):
+        return torch.exp(self.cw_log_softmax(spike_logit))
 
     def sparse_kl_loss(
             self,
@@ -510,23 +746,58 @@ class StickTreeDecoder(TreeDecoder):
             slab_mean: torch.Tensor,
             slab_lnvar: torch.Tensor,):
         ## PIP KL between α and α0
-        ## α * ln(α / α0) + (1-α) * ln(1-α/1-α0)
-        ## = α * ln(α / 1-α) + ln(1-α) +
-        ##   α * ln(1-α0 / α0) - ln(1-α0)
-        ## = sigmoid(logit) * logit - softplus(logit)
-        ##   - sigmoid(logit) * logit0 + softplus(logit0)
-        alpha_hat = self.get_pip(spike_logit)
-        kl_alpha_1 = alpha_hat * (spike_logit - logit_0)
-        kl_alpha = (kl_alpha_1 
-            - nn.functional.softplus(spike_logit) 
-            + nn.functional.softplus(logit_0))
+        ## - α * ln(α) 
+        ## = - soft_max(logit) * log_softmax(logit)
+        pip_hat  = self.get_pip(spike_logit)
+        kl_pip = - pip_hat * self.cw_log_softmax(spike_logit)
 
-        ## Gaussian KL between N(μ,ν) and N(0, v0)
-        sq_term = (torch.exp(-lnvar_0) 
+        ## Gaussian KL between  N(μ, ν) and N(0, v0)
+        sq_term = (torch.exp(-lnvar_0)
             * (torch.square(slab_mean) + torch.exp(slab_lnvar)))
         kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
 
         ## Combine both logit and Gaussian KL
-        return torch.sum(kl_alpha + alpha_hat * kl_g) # return a number sum over [N_topics, N_genes]
+        return torch.sum(kl_pip + pip_hat * kl_g) # return a number sum over [N_topics, N_genes]
 
+class SuSiEDecoder(TreeDecoder):
+    """
+    Decoder for the Sum of Single Effects Tree ETM
+    """
+
+    def __init__(
+            self,
+            n_output: int,
+            v0=1,
+            tree_depth=3,):
+        super().__init__(
+            n_output=n_output,
+            v0=v0,
+            tree_depth=tree_depth
+        )
+
+        # Unnormalized logit to select relevant genes for each node
+        self.spike_logit = nn.Parameter(
+            torch.randn(self.num_tree_nodes, n_output)
+        )
+
+    def get_pip(self, untran_pi: torch.Tensor):
+        return self.soft_max(untran_pi)
+
+    def sparse_kl_loss(
+            self,
+            lnvar_0,
+            untran_pi,
+            slab_mean,
+            slab_lnvar):
+        # entropy term
+        pi = self.get_pip(untran_pi)
+        entropy = -pi * torch.log(pi)
+
+        ## Gaussian KL between N(μ,ν) and N(0, v0)
+        sq_term = (torch.exp(-lnvar_0)
+            * (torch.square(slab_mean) + torch.exp(slab_lnvar)))
+        kl_g = -0.5 * (1. + slab_lnvar - lnvar_0 - sq_term)
+
+        ## Combine both entropy and Gaussian KL
+        return torch.sum(entropy + pi * kl_g) # return a number sum over [N_nodes, N_genes]
 
