@@ -582,14 +582,13 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         beta = self.get_beta(
             self.spike_logit, self.slab_mean, self.slab_lnvar
             )
-        rho = self.safe_exp(beta)
-        aa = torch.mm(theta, rho)
+        aa = self.safe_exp(torch.mm(theta, beta))
 
-        rho_kl = self.sparse_kl_loss(
+        beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
             self.spike_logit, self.slab_mean, self.slab_lnvar)
 
-        return beta, rho_kl, theta, rho, aa
+        return beta, beta_kl, theta, aa
 
     def get_pip(self, spike_logit: torch.Tensor):
         return torch.sigmoid(spike_logit)
@@ -672,18 +671,18 @@ class TreeDecoder(SpikeSlabDecoder):
             self,
             z: torch.Tensor,):
         theta = self.soft_max(z)
+        # DOUBLE CHECK THIS
         beta = self.get_beta(
             self.spike_logit, self.slab_mean, self.slab_lnvar
             )
-        rho = torch.mm(self.A, self.safe_exp(beta))
-        aa = torch.mm(theta, rho)
+        aa = torch.safe_exp(torch.mm(theta, torch.mm(self.A, beta)))
 
-        rho_kl = self.sparse_kl_loss(
+        beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
             self.spike_logit, self.slab_mean, self.slab_lnvar
             )
 
-        return beta, rho_kl, theta, rho, aa
+        return beta, beta_kl, theta, aa
 
 class StickTreeDecoder(TreeDecoder):
     """
@@ -800,4 +799,5 @@ class SuSiEDecoder(TreeDecoder):
 
         ## Combine both entropy and Gaussian KL
         return torch.sum(entropy + pi * kl_g) # return a number sum over [N_nodes, N_genes]
+
 
