@@ -799,5 +799,3 @@ class SuSiEDecoder(TreeDecoder):
 
         ## Combine both entropy and Gaussian KL
         return torch.sum(entropy + pi * kl_g) # return a number sum over [N_nodes, N_genes]
-
-
