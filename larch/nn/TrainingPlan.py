@@ -8,7 +8,7 @@ from larch.nn.base_model import BaseModuleClass
 
 class TrainingPlan(pl.LightningModule):
     """
-    Lightning module task to train deltaTopic modules.
+    Lightning module task to train larch modules.
 
     Parameters
     ----------
@@ -110,39 +110,26 @@ class TrainingPlan(pl.LightningModule):
     def training_step(self, batch, batch_idx, optimizer_idx=0):
         if "kl_weight" in self.loss_kwargs:
             self.loss_kwargs.update({"kl_weight": self.kl_weight})
-        _, _, deltaTopic_loss = self.forward(batch, loss_kwargs=self.loss_kwargs)
-        reconstruction_loss = deltaTopic_loss.reconstruction_loss
-        reconstruction_loss_spliced = deltaTopic_loss.reconstruction_loss_spliced
-        reconstruction_loss_unspliced = deltaTopic_loss.reconstruction_loss_unspliced
-        kl_beta = deltaTopic_loss.kl_beta
-        kl_rho = deltaTopic_loss.kl_rho
-        kl_delta = deltaTopic_loss.kl_delta
+        _, _, larch_loss = self.forward(batch, loss_kwargs=self.loss_kwargs)
+        reconstruction_loss = larch_loss.reconstruction_loss
+        kl_beta = larch_loss.kl_beta
         # pytorch lightning automatically backprops on "loss"
-        self.log("train_loss", deltaTopic_loss.loss, on_epoch=True)
+        self.log("train_loss", larch_loss.loss, on_epoch=True)
         return {
-            "loss": deltaTopic_loss.loss,
+            "loss": larch_loss.loss,
             "reconstruction_loss_sum": reconstruction_loss.sum(),
-            "kl_local_sum": deltaTopic_loss.kl_local.sum(),
-            #"kl_global": deltaTopic_loss.kl_global,
+            "kl_local_sum": larch_loss.kl_local.sum(),
             "kl_beta_sum": kl_beta.sum(),
-            "kl_rho_sum": kl_rho.sum(),
-            "kl_delta_sum": kl_delta.sum(),
-            "reconstruction_loss_spliced_sum": reconstruction_loss_spliced.sum(),
-            "reconstruction_loss_unspliced_sum": reconstruction_loss_unspliced.sum(),
             "n_obs": reconstruction_loss.shape[0],
         }
 
     def training_epoch_end(self, outputs):
-        n_obs, elbo, rec_loss, kl_local, rec_loss_spliced, rec_loss_unspliced, kl_beta, kl_rho, kl_delta  = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        n_obs, elbo, rec_loss, kl_local, kl_beta  = 0, 0, 0, 0, 0
         for tensors in outputs:
             elbo += tensors["reconstruction_loss_sum"] + tensors["kl_local_sum"]
             rec_loss += tensors["reconstruction_loss_sum"]
-            rec_loss_spliced += tensors['reconstruction_loss_spliced_sum']
-            rec_loss_unspliced += tensors['reconstruction_loss_unspliced_sum']
             kl_local += tensors["kl_local_sum"]
             kl_beta += tensors["kl_beta_sum"]
-            kl_rho += tensors["kl_rho_sum"]
-            kl_delta += tensors["kl_delta_sum"]
             n_obs += tensors["n_obs"]
         # kl global same for each minibatch
         #kl_global = outputs[0]["kl_global"]
@@ -151,46 +138,29 @@ class TrainingPlan(pl.LightningModule):
         self.log("reconstruction_loss_train", rec_loss / n_obs)
         self.log("kl_local_train", kl_local / n_obs)
         self.log("kl_beta_train", kl_beta / n_obs)
-        self.log("kl_rho_train", kl_rho / n_obs)
-        self.log("kl_delta_train", kl_delta / n_obs)
-        self.log("reconstruction_loss_spliced_train", rec_loss_spliced / n_obs)
-        self.log("reconstruction_loss_unspliced_train", rec_loss_unspliced / n_obs)
-        #self.log("kl_global_train", kl_global)
 
     def validation_step(self, batch, batch_idx):
-        _, _, deltaTopic_loss = self.forward(batch, loss_kwargs=self.loss_kwargs)
-        reconstruction_loss = deltaTopic_loss.reconstruction_loss
-        reconstruction_loss_spliced = deltaTopic_loss.reconstruction_loss_spliced
-        reconstruction_loss_unspliced = deltaTopic_loss.reconstruction_loss_unspliced
-        kl_beta = deltaTopic_loss.kl_beta
-        kl_rho = deltaTopic_loss.kl_rho
-        kl_delta = deltaTopic_loss.kl_delta
-        self.log("validation_loss", deltaTopic_loss.loss, on_epoch=True)
+        _, _, larch_loss = self.forward(batch, loss_kwargs=self.loss_kwargs)
+        reconstruction_loss = larch_loss.reconstruction_loss
+        kl_beta = larch_loss.kl_beta
+        self.log("validation_loss", larch_loss.loss, on_epoch=True)
         return {
             "reconstruction_loss_sum": reconstruction_loss.sum(),
-            "kl_local_sum": deltaTopic_loss.kl_local.sum(),
-            #"kl_global": deltaTopic_loss.kl_global,
+            "kl_local_sum": larch_loss.kl_local.sum(),
+            #"kl_global": larch_loss.kl_global,
             "kl_beta_sum": kl_beta.sum(),
-            "kl_rho_sum": kl_rho.sum(),
-            "kl_delta_sum": kl_delta.sum(),
-            "reconstruction_loss_spliced_sum": reconstruction_loss_spliced.sum(),
-            "reconstruction_loss_unspliced_sum": reconstruction_loss_unspliced.sum(),
             "n_obs": reconstruction_loss.shape[0],
         }
 
     def validation_epoch_end(self, outputs):
         """Aggregate validation step information."""
         #n_obs, elbo, rec_loss, kl_local = 0, 0, 0, 0
-        n_obs, elbo, rec_loss, kl_local, rec_loss_spliced, rec_loss_unspliced, kl_beta, kl_rho, kl_delta  = 0, 0, 0, 0, 0, 0, 0, 0, 0
+        n_obs, elbo, rec_loss, kl_local, kl_beta  = 0, 0, 0, 0, 0
         for tensors in outputs:
             elbo += tensors["reconstruction_loss_sum"] + tensors["kl_local_sum"]
             rec_loss += tensors["reconstruction_loss_sum"]
-            rec_loss_spliced = tensors['reconstruction_loss_spliced_sum']
-            rec_loss_unspliced = tensors['reconstruction_loss_unspliced_sum']
             kl_local += tensors["kl_local_sum"]
             kl_beta += tensors["kl_beta_sum"]
-            kl_rho += tensors["kl_rho_sum"]
-            kl_delta += tensors["kl_delta_sum"]
             n_obs += tensors["n_obs"]
         # kl global same for each minibatch
         #kl_global = outputs[0]["kl_global"]
@@ -199,11 +169,6 @@ class TrainingPlan(pl.LightningModule):
         self.log("reconstruction_loss_validation", rec_loss / n_obs)
         self.log("kl_local_validation", kl_local / n_obs)
         self.log("kl_beta_validation", kl_beta / n_obs)
-        self.log("kl_rho_validation", kl_rho / n_obs)
-        self.log("kl_delta_validation", kl_delta / n_obs)
-        self.log("reconstruction_loss_spliced_validation", rec_loss_spliced / n_obs)
-        self.log("reconstruction_loss_unspliced_validation", rec_loss_unspliced / n_obs)
-        #self.log("kl_global_validation", kl_global)
 
     def configure_optimizers(self):
         params = filter(lambda p: p.requires_grad, self.module.parameters())

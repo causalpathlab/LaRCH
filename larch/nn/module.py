@@ -170,7 +170,8 @@ class BaseModule(BaseModuleClass):
         x = tensors[_CONSTANTS.X_KEY]
         qz_m = inference_outputs["qz_m"]
         qz_v = inference_outputs["qz_v"]
-        beta_kl = generative_outputs["beta_kl"]
+        # kl_divergence for beta, beta_kl, tensor of torch.size([]) <- torch.sum([N_topics, N_genes])
+        kl_divergence_beta = generative_outputs["beta_kl"]
 
         # [batch_size]
         reconstruction_loss = self.get_reconstruction_loss(x)
@@ -182,16 +183,15 @@ class BaseModule(BaseModuleClass):
             Normal(qz_m, torch.sqrt(qz_v)),
             Normal(mean, scale)).sum(dim=1) # summing over all latent dimensions
         
-        # kl_divergence for beta, beta_kl, tensor of torch.size([]) <- torch.sum([N_topics, N_genes])
-        kl_divergence_beta = beta_kl
-
         loss = (torch.mean(reconstruction_loss + kl_weight * kl_local)
             + kl_weight_beta * kl_divergence_beta / x.shape[1])
 
         return LossRecorder(
-            loss, reconstruction_loss, kl_local,
+            loss=loss,
+            reconstruction_loss=reconstruction_loss,
+            kl_local=kl_local,
             kl_beta=kl_divergence_beta
-            )
+        )
 
 class SpikeSlabModule(BaseModule):
     """

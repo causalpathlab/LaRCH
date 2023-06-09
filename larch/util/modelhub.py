@@ -115,7 +115,7 @@ class BaseModel(BaseModelClass):
         Parameters
         ----------
         adatas
-            List of adata_spliced and adata_unspliced.
+            Annotation Data.
         deterministic
             If true, use the mean of the encoder instead of a Gaussian sample.
         output_softmax_z
@@ -270,7 +270,7 @@ class TreeSpikeSlab(BaseModel):
     Parameters
     ----------
     adata_seq
-        Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
+        AnnData object that has been registered via :func:`data.setup_anndata`
         and contains data.
     tree_depth
         depth of the tree
@@ -342,7 +342,7 @@ class SuSiETree(BaseModel):
     Parameters
     ----------
     adata_seq
-        Spliced and unspliced count AnnData object that has been registered via :func:`data.setup_anndata`
+        AnnData object that has been registered via :func:`data.setup_anndata`
         and contains data.
     tree_depth
         depth of the tree
