@@ -276,10 +276,11 @@ class TreeSpikeSlab(SpikeSlab):
             adata_seq: AnnData,
             tree_depth: int = 3,
             **model_kwargs,):
-        super().super().__init__()
-
-        self.adata = adata_seq  
-        self.tree_depth = tree_depth
+        super().__init__(
+            adata_seq, 
+            **model_kwargs
+        )
+        
         self.module = TreeSpikeSlabModule(
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
