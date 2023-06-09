@@ -278,6 +278,8 @@ class TreeStickSlabModule(BaseModule):
             kl_weight_beta=kl_weight_beta
         )
 
+        self.tree_depth = tree_depth
+
         self.decoder = StickTreeDecoder(
             n_output=self.n_input,
             pip0=self.pip0_rho,
@@ -311,6 +313,8 @@ class TreeSoftmaxSlabModule(BaseModule):
             kl_weight_beta=kl_weight_beta
         )
 
+        self.tree_depth = tree_depth
+
         self.decoder = SoftmaxSpikeSlabTreeDecoder(
             self.n_input,
             pip0=self.pip0_rho,
@@ -340,6 +344,8 @@ class SuSiETreeModule(BaseModule):
             kl_weight=kl_weight,
             kl_weight_beta=kl_weight_beta
         )
+
+        self.tree_depth = tree_depth
 
         self.decoder = SuSiEDecoder(
             self.n_input,
