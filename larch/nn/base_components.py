@@ -784,6 +784,7 @@ class SuSiEDecoder(TreeDecoder):
 
     def sparse_kl_loss(
             self,
+            logit_0,
             lnvar_0,
             untran_pi,
             slab_mean,
