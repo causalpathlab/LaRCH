@@ -9,30 +9,17 @@ from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
 from larch.nn.TrainingPlan import TrainingPlan
 from larch.nn.module import SpikeSlabModule, TreeSpikeSlabModule, SuSiETreeModule, TreeStickSlabModule, TreeSoftmaxSlabModule
 
-class SpikeSlab(BaseModelClass):
+class BaseModel(BaseModelClass):
     """
-    Basic Spike and Slab Model
+    Base Model without module
     """
 
     def __init__(
             self,
-            adata_seq: AnnData,
-            n_latent: int = 32,
-            **model_kwargs,):
+            adata_seq: AnnData,):
         super().__init__()
 
-        self.n_latent = n_latent
         self.adata = adata_seq
-
-        self.module = SpikeSlabModule(
-            n_genes=self.adata.n_vars,
-            n_latent=self.n_latent,
-            **model_kwargs,)
-
-        self._model_summary_string = (
-            "spike_slab with the following params: "
-            + "\n n_latent: {}, n_genes: {}"
-        ).format(n_latent, self.adata.n_vars)
 
     def train(
             self,
@@ -160,46 +147,6 @@ class SpikeSlab(BaseModelClass):
 
         return latent_z
 
-    @torch.no_grad()
-    def get_parameters(
-            self,
-            save_dir=None,
-            overwrite=False,) -> List[np.ndarray]:
-        self.module.eval()
-        decoder = self.module.decoder
-
-        if (
-            not os.path.exists(os.path.join(save_dir, "model_parameters"))
-            or overwrite
-        ):
-            os.makedirs(
-                os.path.join(save_dir, "model_parameters"), 
-                exist_ok=overwrite)
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "spike_logit_rho.txt"
-            ), decoder.spike_logit.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_mean_rho.txt"
-            ), decoder.slab_mean.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_lnvar_rho.txt"
-            ), decoder.slab_lnvar.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "bias_gene.txt"
-            ), decoder.bias_d.cpu().numpy()
-        )
-
     def save(
             self,
             dir_path: str,
@@ -253,7 +200,70 @@ class SpikeSlab(BaseModelClass):
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
-class TreeSpikeSlab(SpikeSlab):
+class SpikeSlab(BaseModelClass):
+    """
+    Basic Spike and Slab Model
+    """
+
+    def __init__(
+            self,
+            adata_seq: AnnData,
+            n_latent: int = 32,
+            **model_kwargs,):
+        super().__init__(adata_seq)
+
+        self.n_latent = n_latent
+        self.module = SpikeSlabModule(
+            n_genes=self.adata.n_vars,
+            n_latent=self.n_latent,
+            **model_kwargs,)
+
+        self._model_summary_string = (
+            "spike_slab with the following params: "
+            + "\n n_latent: {}, n_genes: {}"
+        ).format(n_latent, self.adata.n_vars)
+
+    @torch.no_grad()
+    def get_parameters(
+            self,
+            save_dir=None,
+            overwrite=False,) -> List[np.ndarray]:
+        self.module.eval()
+        decoder = self.module.decoder
+
+        if (
+            not os.path.exists(os.path.join(save_dir, "model_parameters"))
+            or overwrite
+        ):
+            os.makedirs(
+                os.path.join(save_dir, "model_parameters"), 
+                exist_ok=overwrite)
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "spike_logit_rho.txt"
+            ), decoder.spike_logit.cpu().numpy()
+        )
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "slab_mean_rho.txt"
+            ), decoder.slab_mean.cpu().numpy()
+        )
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "slab_lnvar_rho.txt"
+            ), decoder.slab_lnvar.cpu().numpy()
+        )
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "bias_gene.txt"
+            ), decoder.bias_d.cpu().numpy()
+        )
+
+class TreeSpikeSlab(BaseModelClass):
     """
     tree spike slab
 
@@ -276,10 +286,9 @@ class TreeSpikeSlab(SpikeSlab):
             adata_seq: AnnData,
             tree_depth: int = 3,
             **model_kwargs,):
-        super().__init__(
-            adata_seq, 
-            **model_kwargs
-        )
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
         
         self.module = TreeSpikeSlabModule(
             n_genes=self.adata.n_vars,
@@ -326,7 +335,7 @@ class TreeSpikeSlab(SpikeSlab):
             ), decoder.slab_lnvar.cpu().numpy()
         )
 
-class SuSiETree(TreeSpikeSlab):
+class SuSiETree(BaseModelClass):
     """
     susie_tree model for single-cell data.
 
@@ -349,11 +358,9 @@ class SuSiETree(TreeSpikeSlab):
             adata_seq: AnnData,
             tree_depth: int = 3,
             **model_kwargs,):
-        super().__init__(
-            adata_seq,
-            tree_depth,
-            **model_kwargs,
-        )
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
 
         self.module = SuSiETreeModule(
             n_genes=self.adata.n_vars,
@@ -420,11 +427,9 @@ class TreeStickSlab(TreeSpikeSlab):
             adata_seq: AnnData,
             tree_depth: int = 3,
             **model_kwargs,):
-        super().__init__(
-            adata_seq,
-            tree_depth,
-            **model_kwargs
-        )
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
 
         self.module = TreeStickSlabModule(
             n_genes=self.adata.n_vars,
@@ -511,15 +516,13 @@ class TreeSoftmaxSlab(TreeSpikeSlab):
             adata_seq: AnnData,
             tree_depth: int = 3,
             **model_kwargs,):
-        super().__init__(
-            adata_seq, 
-            tree_depth,
-            **model_kwargs,
-        )
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
 
         self.module = TreeSoftmaxSlabModule(
             n_genes=self.adata.n_vars,
-            tree_depth=tree_depth,
+            tree_depth=self.tree_depth,
             **model_kwargs
         )
 

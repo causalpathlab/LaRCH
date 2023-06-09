@@ -692,12 +692,12 @@ class StickTreeDecoder(TreeDecoder):
     def __init__(
             self,
             n_output: int,
-            alpha0=0.1,
+            pip0=0.1,
             v0=1,
             tree_depth=3,):
         super().__init__(
             n_output=n_output,
-            pip0=alpha0,
+            pip0=pip0,
             v0=v0,
             tree_depth=tree_depth
         )
@@ -721,12 +721,12 @@ class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
     def __init__(
             self,
             n_output: int,
-            alpha0=0.1,
+            pip0=0.1,
             v0=1,
             tree_depth=3,):
         super().__init__(
             n_output=n_output,
-            pip0=alpha0,
+            pip0=pip0,
             v0=v0,
             tree_depth=tree_depth
             )

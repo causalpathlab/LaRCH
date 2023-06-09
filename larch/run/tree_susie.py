@@ -12,7 +12,6 @@ from larch.util.modelhub import SuSiETree
 def main():
     parser = argparse.ArgumentParser(description='Parameters for NN')
     parser.add_argument('--tree_depth', type=int, help='tree depth', default=5) # 4, 32, 128
-    parser.add_argument('--pip0', type=float, help='pip0', default=0.1) # 1e-3, 1e-2, 1e-1, 1
     parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=2000) # 1000
     parser.add_argument('--lr', type=float, help='learning_rate', default=1e-2) # 0.01
     parser.add_argument('--bs', type=int, help='Batch size', default=128) # 128
@@ -33,7 +32,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model_id = f"susie_tree_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+    model_id = f"susie_tree_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
     if os.path.exists(os.path.join(args.out_dir, model_id)):
@@ -52,7 +51,7 @@ def main():
         logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = SuSiETree(adata, tree_depth = args.tree_depth, pip0_rho=args.pip0, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+        model = SuSiETree(adata, tree_depth = args.tree_depth, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
 
         seed_everything(args.seed, workers=True)
         #set deterministic=True for reproducibility

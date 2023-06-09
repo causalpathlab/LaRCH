@@ -10,11 +10,10 @@ from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
 
-class SpikeSlabModule(BaseModuleClass):
+class BaseModule(BaseModuleClass):
     """
-    The BETM Module
+    Base Module without any decoder
     """
-
     def __init__(
             self,
             n_genes: int,
@@ -36,16 +35,10 @@ class SpikeSlabModule(BaseModuleClass):
 
         self.z_encoder = BayesianETMEncoder(
             n_input=self.n_input,
-            n_output=self.n_output,
+            n_output=self.n_latent,
             n_hidden=dim_hidden_encoder,
             n_layers_individual=n_layers_encoder_individual,
             log_variational=self.log_variational,
-        )
-
-        self.decoder = SpikeSlabDecoder(
-            n_input=self.n_latent,
-            n_output=self.n_input,
-            pip0=self.pip0_rho,
         )
 
     def dir_llik(
@@ -200,7 +193,29 @@ class SpikeSlabModule(BaseModuleClass):
             kl_beta=kl_divergence_beta
             )
 
-class TreeSpikeSlabModule(SpikeSlabModule):
+class SpikeSlabModule(BaseModule):
+    """
+    The BETM Module
+    """
+
+    def __init__(
+            self,
+            n_genes: int,
+            n_latent: int = 32,
+            n_layers_encoder_individual: int = 2,
+            dim_hidden_encoder: int = 128,
+            log_variational: bool = True,
+            pip0_rho: float = 0.1, 
+            kl_weight: float = 1.0,
+            kl_weight_beta: float = 1.0,):
+
+        self.decoder = SpikeSlabDecoder(
+            n_input=self.n_latent,
+            n_output=self.n_input,
+            pip0=self.pip0_rho,
+        )
+
+class TreeSpikeSlabModule(BaseModule):
     """
     Tree VAE
     """
@@ -225,7 +240,8 @@ class TreeSpikeSlabModule(SpikeSlabModule):
             log_variational=log_variational,
             pip0_rho=pip0_rho,
             kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta)
+            kl_weight_beta=kl_weight_beta
+        )
 
         self.tree_depth = tree_depth
 
@@ -234,7 +250,7 @@ class TreeSpikeSlabModule(SpikeSlabModule):
             pip0=self.pip0_rho,
             tree_depth=self.tree_depth)
 
-class TreeStickSlabModule(TreeSpikeSlabModule):
+class TreeStickSlabModule(BaseModule):
     """
     Tree VAE with stick breaking pip
     """
@@ -246,32 +262,29 @@ class TreeStickSlabModule(TreeSpikeSlabModule):
             n_layers_encoder_individual: int = 2,
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
-            alpha0_rho: float = 0.1,
+            pip0_rho: float = 0.1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,):
-        super().__init__(
-            n_genes,
-            tree_depth,
-            n_layers_encoder_individual,
-            dim_hidden_encoder,
-            log_variational,
-            alpha0_rho,
-            kl_weight,
-            kl_weight_beta
-        )
+        n_latent = 2 ** (tree_depth - 1)
 
-        self.alpha0_rho = alpha0_rho
+        super().__init__(
+            n_genes=n_genes,
+            n_latent=n_latent,
+            n_layers_encoder_individual=n_layers_encoder_individual,
+            dim_hidden_encoder=dim_hidden_encoder,
+            log_variational=log_variational,
+            pip0_rho=pip0_rho,
+            kl_weight=kl_weight,
+            kl_weight_beta=kl_weight_beta
+        )
 
         self.decoder = StickTreeDecoder(
             n_output=self.n_input,
-            alpha0=self.alpha0_rho,
+            pip0=self.pip0_rho,
             tree_depth=self.tree_depth
         )
 
-
-
-
-class TreeSoftmaxSlabModule(TreeSpikeSlabModule):
+class TreeSoftmaxSlabModule(BaseModule):
     """
     Tree VAE with softmax regularization on pip
     """
@@ -282,24 +295,25 @@ class TreeSoftmaxSlabModule(TreeSpikeSlabModule):
             n_layers_encoder_individual: int = 2,
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
-            alpha0_rho: float = 0.1,
+            pip0_rho: float = 0.1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,):
-        super().__init__(
-            n_genes,
-            tree_depth,
-            n_layers_encoder_individual,
-            dim_hidden_encoder,
-            log_variational,
-            alpha0_rho,
-            kl_weight,
-            kl_weight_beta,)
+        n_latent = 2 ** (tree_depth - 1)
 
-        self.alpha_rho = alpha0_rho
+        super().__init__(
+            n_genes=n_genes,
+            n_latent=n_latent,
+            n_layers_encoder_individual=n_layers_encoder_individual,
+            dim_hidden_encoder=dim_hidden_encoder,
+            log_variational=log_variational,
+            pip0_rho=pip0_rho,
+            kl_weight=kl_weight,
+            kl_weight_beta=kl_weight_beta
+        )
 
         self.decoder = SoftmaxSpikeSlabTreeDecoder(
             self.n_input,
-            alpha0=self.alpha0_rho,
+            pip0=self.pip0_rho,
             tree_depth=self.tree_depth)
 
 class SuSiETreeModule(TreeSpikeSlabModule):
@@ -313,18 +327,19 @@ class SuSiETreeModule(TreeSpikeSlabModule):
             n_layers_encoder_individual: int = 2,
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
-            pip0_rho: float = 0.1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,):
+        n_latent = 2 ** (tree_depth - 1)
+
         super().__init__(
-            n_genes,
-            tree_depth,
-            n_layers_encoder_individual,
-            dim_hidden_encoder,
-            log_variational,
-            pip0_rho,
-            kl_weight,
-            kl_weight_beta,)
+            n_genes=n_genes,
+            n_latent=n_latent,
+            n_layers_encoder_individual=n_layers_encoder_individual,
+            dim_hidden_encoder=dim_hidden_encoder,
+            log_variational=log_variational,
+            kl_weight=kl_weight,
+            kl_weight_beta=kl_weight_beta
+        )
 
         self.decoder = SuSiEDecoder(
             self.n_input,
