@@ -200,7 +200,7 @@ class BaseModel(BaseModelClass):
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
-class SpikeSlab(BaseModelClass):
+class SpikeSlab(BaseModel):
     """
     Basic Spike and Slab Model
     """
@@ -263,7 +263,7 @@ class SpikeSlab(BaseModelClass):
             ), decoder.bias_d.cpu().numpy()
         )
 
-class TreeSpikeSlab(BaseModelClass):
+class TreeSpikeSlab(BaseModel):
     """
     tree spike slab
 
@@ -335,7 +335,7 @@ class TreeSpikeSlab(BaseModelClass):
             ), decoder.slab_lnvar.cpu().numpy()
         )
 
-class SuSiETree(BaseModelClass):
+class SuSiETree(BaseModel):
     """
     susie_tree model for single-cell data.
 
@@ -407,7 +407,7 @@ class SuSiETree(BaseModelClass):
             ), decoder.slab_lnvar.cpu().numpy()
         )
 
-class TreeStickSlab(TreeSpikeSlab):
+class TreeStickSlab(BaseModel):
     """
     tree stick slab
 
@@ -496,7 +496,7 @@ class TreeStickSlab(TreeSpikeSlab):
             ), decoder.slab_lnvar.cpu().numpy()
         )
 
-class TreeSoftmaxSlab(TreeSpikeSlab):
+class TreeSoftmaxSlab(BaseModel):
     """
     tree stick slab
 

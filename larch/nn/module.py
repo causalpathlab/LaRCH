@@ -316,7 +316,7 @@ class TreeSoftmaxSlabModule(BaseModule):
             pip0=self.pip0_rho,
             tree_depth=self.tree_depth)
 
-class SuSiETreeModule(TreeSpikeSlabModule):
+class SuSiETreeModule(BaseModule):
     """
     Sum of single effects tree VAE
     """
