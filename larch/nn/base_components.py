@@ -26,92 +26,92 @@ def one_hot(index: torch.Tensor, n_cat: int) -> torch.Tensor:
 
 class FCLayers(nn.Module):
 
-        """
-        A helper class to build fully-connected layers for a neural network.
+    """
+    A helper class to build fully-connected layers for a neural network.
 
-        Parameters
-        ----------
-        n_in
-            The dimensionality of the input
-        n_out
-            The dimensionality of the output
-        n_cat_list
-            A list containing, for each category of interest,
-            the number of categories. Each category will be
-            included using a one-hot encoding.
-        n_layers
-            The number of fully-connected hidden layers
-        n_hidden
-            The number of nodes per hidden layer
-        dropout_rate
-            Dropout rate to apply to each of the hidden layers
-        use_batch_norm
-            Whether to have `BatchNorm` layers or not
-        use_layer_norm
-            Whether to have `LayerNorm` layers or not
-        use_activation
-            Whether to have layer activation or not
-        bias
-            Whether to learn bias in linear layers or not
-        inject_covariates
-            Whether to inject covariates in each layer, or just the first (default).
-        activation_fn
-            Which activation function to use
-        """
+    Parameters
+    ----------
+    n_in
+        The dimensionality of the input
+    n_out
+        The dimensionality of the output
+    n_cat_list
+        A list containing, for each category of interest,
+        the number of categories. Each category will be
+        included using a one-hot encoding.
+    n_layers
+        The number of fully-connected hidden layers
+    n_hidden
+        The number of nodes per hidden layer
+    dropout_rate
+        Dropout rate to apply to each of the hidden layers
+    use_batch_norm
+        Whether to have `BatchNorm` layers or not
+    use_layer_norm
+        Whether to have `LayerNorm` layers or not
+    use_activation
+        Whether to have layer activation or not
+    bias
+        Whether to learn bias in linear layers or not
+    inject_covariates
+        Whether to inject covariates in each layer, or just the first (default).
+    activation_fn
+        Which activation function to use
+    """
 
-        def __init__(
-                self,
-                n_in: int,
-                n_out: int,
-                n_cat_list: Iterable[int] = None,
-                n_layers: int = 1,
-                n_hidden: int = 128,
-                dropout_rate: float = 0.1,
-                use_batch_norm: bool = True,
-                use_layer_norm: bool = False,
-                use_activation: bool = True,
-                bias: bool = True,
-                inject_covariates: bool = True,
-                activation_fn: nn.Module = nn.ReLU,):
-            super().__init__()
-            self.inject_covariates = inject_covariates
-            layers_dim = [n_in] + (n_layers - 1) * [n_hidden] + [n_out]
+    def __init__(
+            self,
+            n_in: int,
+            n_out: int,
+            n_cat_list: Iterable[int] = None,
+            n_layers: int = 1,
+            n_hidden: int = 128,
+            dropout_rate: float = 0.1,
+            use_batch_norm: bool = True,
+            use_layer_norm: bool = False,
+            use_activation: bool = True,
+            bias: bool = True,
+            inject_covariates: bool = True,
+            activation_fn: nn.Module = nn.ReLU,):
+        super().__init__()
+        self.inject_covariates = inject_covariates
+        layers_dim = [n_in] + (n_layers - 1) * [n_hidden] + [n_out]
 
-            if n_cat_list is not None:
-                # n_cat = 1 will be ignored
-                self.n_cat_list = [n_cat if n_cat > 1 else 0 for n_cat in n_cat_list]
-            else:
-                self.n_cat_list = []
+        if n_cat_list is not None:
+            # n_cat = 1 will be ignored
+            self.n_cat_list = [n_cat if n_cat > 1 else 0 for n_cat in n_cat_list]
+        else:
+            self.n_cat_list = []
 
-            cat_dim = sum(self.n_cat_list)
-            self.fc_layers = nn.Sequential(
-                collections.OrderedDict(
-                    [
-                        (
-                            "Layer {}".format(i),
-                            nn.Sequential(
-                                nn.Linear(
-                                    n_in + cat_dim * self.inject_into_layer(i),
-                                    n_out,
-                                    bias=bias,
-                                ),
-                                # non-default params come from defaults in original Tensorflow implementation
-                                nn.BatchNorm1d(n_out, momentum=0.01, eps=0.001)
-                                if use_batch_norm
-                                else None,
-                                nn.LayerNorm(n_out, elementwise_affine=False)
-                                if use_layer_norm
-                                else None,
-                                activation_fn() if use_activation else None,
-                                nn.Dropout(p=dropout_rate) if dropout_rate > 0 else None,
+        cat_dim = sum(self.n_cat_list)
+        self.fc_layers = nn.Sequential(
+            collections.OrderedDict(
+                [
+                    (
+                        "Layer {}".format(i),
+                        nn.Sequential(
+                            nn.Linear(
+                                n_in + cat_dim * self.inject_into_layer(i),
+                                n_out,
+                                bias=bias,
                             ),
-                        )
-                        for i, (n_in, n_out) in enumerate(
-                            zip(layers_dim[:-1], layers_dim[1:])
-                        )
-                    ]
-                )
+                            # non-default params come from defaults in original Tensorflow implementation
+                            nn.BatchNorm1d(n_out, momentum=0.01, eps=0.001)
+                            if use_batch_norm
+                            else None,
+                            nn.LayerNorm(n_out, elementwise_affine=False)
+                            if use_layer_norm
+                            else None,
+                            activation_fn() if use_activation else None,
+                            nn.Dropout(p=dropout_rate) if dropout_rate > 0 else None,
+                        ),
+                    )
+                    for i, (n_in, n_out) in enumerate(
+                        zip(layers_dim[:-1], layers_dim[1:])
+                    )
+                ]
             )
+        )
 
     def inject_into_layer(self, layer_num) -> bool:
         """Helper to determine if covariates should be injected."""
