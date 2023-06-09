@@ -61,8 +61,8 @@ class BaseModule(BaseModuleClass):
         term2 = torch.sum(
             torch.where(
                 xx > 0, 
-                torch.lgamma(aa + xx),
-                torch.lgamma(aa),
+                torch.lgamma(aa + xx)
+                - torch.lgamma(aa),
                 torch.zeros_like(xx)),
             dim=-1
         ) # [n_batch]
