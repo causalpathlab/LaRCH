@@ -9,6 +9,12 @@ from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
 from larch.nn.TrainingPlan import TrainingPlan
 from larch.nn.module import SpikeSlabModule, TreeSpikeSlabModule, SuSiETreeModule, TreeStickSlabModule, TreeSoftmaxSlabModule
 
+logger = logging.getLogger(__name__)
+
+def _unpack_tensors(tensors):
+    x = tensors["X"].squeeze_(0)
+    return x
+    
 class BaseModel(BaseModelClass):
     """
     Base Model without module
@@ -197,6 +203,40 @@ class BaseModel(BaseModelClass):
 
         torch.save(self.module.state_dict(), model_save_path)
 
+    @torch.no_grad()
+    def get_parameters(
+            self,
+            save_dir=None,
+            overwrite=False,) -> List[np.ndarray]:
+        self.module.eval()
+        decoder = self.module.decoder
+
+        if (
+            not os.path.exists(os.path.join(save_dir, "model_parameters"))
+            or overwrite
+        ):
+            os.makedirs(
+                os.path.join(save_dir, "model_parameters"), 
+                exist_ok=overwrite)
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "spike_logit_rho.txt"
+            ), decoder.spike_logit.cpu().numpy()
+        )
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "slab_mean_rho.txt"
+            ), decoder.slab_mean.cpu().numpy()
+        )
+
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "slab_lnvar_rho.txt"
+            ), decoder.slab_lnvar.cpu().numpy()
+        )
+
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
@@ -300,40 +340,6 @@ class TreeSpikeSlab(BaseModel):
             "tree_spike_slab with the following params: "
             + "\n n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
-
-    @torch.no_grad()
-    def get_parameters(
-            self,
-            save_dir=None,
-            overwrite=False,) -> List[np.ndarray]:
-        self.module.eval()
-        decoder = self.module.decoder
-
-        if (
-            not os.path.exists(os.path.join(save_dir, "model_parameters"))
-            or overwrite
-        ):
-            os.makedirs(
-                os.path.join(save_dir, "model_parameters"), 
-                exist_ok=overwrite)
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "spike_logit_rho.txt"
-            ), decoder.spike_logit.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_mean_rho.txt"
-            ), decoder.slab_mean.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_lnvar_rho.txt"
-            ), decoder.slab_lnvar.cpu().numpy()
-        )
 
 class SuSiETree(BaseModel):
     """
