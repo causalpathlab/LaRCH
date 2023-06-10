@@ -104,7 +104,7 @@ class BaseModule(BaseModuleClass):
             z = inference_out["z"]
 
         if output_softmax_z:
-            generative = self.generative(z)
+            generative_outputs = self.generative(z)
             z = generative_outputs["theta"]
 
         return dict(z=z)
