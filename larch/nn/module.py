@@ -208,6 +208,16 @@ class SpikeSlabModule(BaseModule):
             pip0_rho: float = 0.1, 
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,):
+        super().__init__(
+            n_genes=n_genes,
+            n_latent=n_latent,
+            n_layers_encoder_individual=n_layers_encoder_individual,
+            dim_hidden_encoder=dim_hidden_encoder,
+            log_variational=log_variational,
+            pip0_rho=pip0_rho,
+            kl_weight=kl_weight,
+            kl_weight_beta=kl_weight_beta
+        )
 
         self.decoder = SpikeSlabDecoder(
             n_input=self.n_latent,
