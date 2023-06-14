@@ -578,7 +578,6 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             self, 
             z: torch.Tensor):
         theta = self.soft_max(z)
-        ## DOUBLE CHECK. Should it be aa = torch.mm(theta, beta), rho = exp(aa)?
         beta = self.get_beta(
             self.spike_logit, self.slab_mean, self.slab_lnvar
             )
@@ -601,7 +600,6 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         pip = self.get_pip(spike_logit)
 
         mean = slab_mean * pip
-        ## DOUBLE CHECK: is this calculation of var correct?
         var = pip * (1 - pip) * torch.square(slab_mean)
         var = var + pip * torch.exp(slab_lnvar)
 

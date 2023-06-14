@@ -51,7 +51,7 @@ def main():
         logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = spike_slab(adata, n_latent = args.nLV)
+        model = SpikeSlab(adata, n_latent = args.nLV)
 
         seed_everything(args.seed, workers=True)
         #set deterministic=True for reproducibility
