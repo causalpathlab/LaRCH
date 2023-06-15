@@ -454,7 +454,7 @@ class BayesianETMEncoder(nn.Module):
         self.var_encoder = nn.Linear(n_hidden, n_output)
 
     def forward(self, x: torch.Tensor, *cat_list: int):
-
+        # TODO: layer normalizaton
         if self.log_variational:
             x_ = torch.log(1 + x)
 
@@ -518,6 +518,7 @@ class BayesianETMDecoder(nn.Module):
             slab_mean: torch.Tensor,
             slab_lnvar: torch.Tensor,
             bias_d: torch.Tensor,):
+        # normalize betas per node, keep track of node means and 
         mean = slab_mean
 
         var = torch.exp(slab_lnvar)
@@ -577,11 +578,14 @@ class SpikeSlabDecoder(BayesianETMDecoder):
     def forward(
             self, 
             z: torch.Tensor):
-        theta = self.soft_max(z)
+        theta = self.safe_exp(z) # relax to just positive, exp(z)? clamped?
         beta = self.get_beta(
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
-        aa = self.safe_exp(torch.mm(theta, beta))
+            self.spike_logit, 
+            self.slab_mean, 
+            self.slab_lnvar, 
+            self.bias_d
+        ) # exp? clamped
+        aa = torch.mm(theta, beta) # no exp
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
@@ -596,7 +600,9 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             self,
             spike_logit: torch.Tensor,
             slab_mean: torch.Tensor,
-            slab_lnvar: torch.Tensor,):
+            slab_lnvar: torch.Tensor,
+            bias_d: torch.Tensor):
+        # standardize slab mean first
         pip = self.get_pip(spike_logit)
 
         mean = slab_mean * pip
@@ -604,8 +610,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         var = var + pip * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
-
-        return mean + eps * torch.sqrt(var)
+        return self.safe_exp(mean + eps * torch.sqrt(var) - gene bias)
 
     def sparse_kl_loss(
             self,
@@ -668,17 +673,19 @@ class TreeDecoder(SpikeSlabDecoder):
     def forward(
             self,
             z: torch.Tensor,):
-        theta = self.soft_max(z)
-        # DOUBLE CHECK THIS
+        theta = self.safe_exp(z)
         beta = self.get_beta(
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
-        aa = self.safe_exp(torch.mm(theta, torch.mm(self.A, beta)))
+            self.spike_logit, 
+            self.slab_mean, 
+            self.slab_lnvar, 
+            self.bias_d
+        )
+        aa = self.torch.mm(theta, torch.mm(self.A, beta))
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
             self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
+        )
 
         return beta, beta_kl, theta, aa
 

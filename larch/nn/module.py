@@ -23,7 +23,8 @@ class BaseModule(BaseModuleClass):
             log_variational: bool = True,
             pip0_rho: float = 0.1, 
             kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
+            kl_weight_beta: float = 1.0,
+            a0: float = 1e-4):
         super().__init__()
 
         self.n_input = n_genes
@@ -32,6 +33,7 @@ class BaseModule(BaseModuleClass):
         self.pip0_rho = pip0_rho
         self.kl_weight = kl_weight
         self.kl_weight_beta = kl_weight_beta
+        self.a0 = a0
 
         self.z_encoder = BayesianETMEncoder(
             n_input=self.n_input,
@@ -44,7 +46,9 @@ class BaseModule(BaseModuleClass):
     def dir_llik(
             self,
             xx: torch.Tensor,
-            aa: torch.Tensor) -> torch.Tensor:
+            aa: torch.Tensor,
+            a0: float = 1e-4) -> torch.Tensor:
+        # TODO add a0 = 1e-4
         '''
         # Dirichlet log-likelihood:
         # lgamma(sum a) - lgamma(sum a + x)
@@ -55,14 +59,14 @@ class BaseModule(BaseModuleClass):
         '''
         reconstruction_loss = None
 
-        term1 = (torch.lgamma(torch.sum(aa, dim=-1))
-            - torch.lgamma(torch.sum(aa + xx, dim=-1))) # [n_batch]
+        term1 = (torch.lgamma(torch.sum(aa + a0, dim=-1))
+            - torch.lgamma(torch.sum(aa + a0 + xx, dim=-1))) # [n_batch]
 
         term2 = torch.sum(
             torch.where(
                 xx > 0, 
-                torch.lgamma(aa + xx)
-                - torch.lgamma(aa),
+                torch.lgamma(aa + a0 + xx)
+                - torch.lgamma(aa + a0),
                 torch.zeros_like(xx)),
             dim=-1
         ) # [n_batch]
@@ -131,7 +135,7 @@ class BaseModule(BaseModuleClass):
         gen_out = self.generative(z)
         aa = gen_out["aa"]
 
-        reconstruction_loss = -self.dir_llik(x, aa)
+        reconstruction_loss = -self.dir_llik(x, aa, self.a0)
 
         return reconstruction_loss
 
@@ -207,7 +211,8 @@ class SpikeSlabModule(BaseModule):
             log_variational: bool = True,
             pip0_rho: float = 0.1, 
             kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
+            kl_weight_beta: float = 1.0,
+            a0: float = 1e-4):
         super().__init__(
             n_genes=n_genes,
             n_latent=n_latent,
@@ -216,7 +221,8 @@ class SpikeSlabModule(BaseModule):
             log_variational=log_variational,
             pip0_rho=pip0_rho,
             kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta
+            kl_weight_beta=kl_weight_beta,
+            a0=a0,
         )
 
         self.decoder = SpikeSlabDecoder(
@@ -239,7 +245,8 @@ class TreeSpikeSlabModule(BaseModule):
             log_variational: bool = True,
             pip0_rho: float = 0.1,
             kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
+            kl_weight_beta: float = 1.0,
+            a0: float = 1e-4,):
         n_latent = 2 ** (tree_depth - 1)
 
         super().__init__(
@@ -250,7 +257,8 @@ class TreeSpikeSlabModule(BaseModule):
             log_variational=log_variational,
             pip0_rho=pip0_rho,
             kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta
+            kl_weight_beta=kl_weight_beta,
+            a0=a0,
         )
 
         self.tree_depth = tree_depth

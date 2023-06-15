@@ -237,6 +237,12 @@ class BaseModel(BaseModelClass):
             ), decoder.slab_lnvar.cpu().numpy()
         )
 
+        np.savetxt(
+            os.path.join(
+                save_dir, "model_parameters", "bias_gene.txt"
+            ), decoder.bias_d.cpu().numpy()
+        )
+
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
@@ -262,46 +268,6 @@ class SpikeSlab(BaseModel):
             "spike_slab with the following params: "
             + "\n n_latent: {}, n_genes: {}"
         ).format(n_latent, self.adata.n_vars)
-
-    @torch.no_grad()
-    def get_parameters(
-            self,
-            save_dir=None,
-            overwrite=False,) -> List[np.ndarray]:
-        self.module.eval()
-        decoder = self.module.decoder
-
-        if (
-            not os.path.exists(os.path.join(save_dir, "model_parameters"))
-            or overwrite
-        ):
-            os.makedirs(
-                os.path.join(save_dir, "model_parameters"), 
-                exist_ok=overwrite)
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "spike_logit_rho.txt"
-            ), decoder.spike_logit.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_mean_rho.txt"
-            ), decoder.slab_mean.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_lnvar_rho.txt"
-            ), decoder.slab_lnvar.cpu().numpy()
-        )
-
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "bias_gene.txt"
-            ), decoder.bias_d.cpu().numpy()
-        )
 
 class TreeSpikeSlab(BaseModel):
     """
