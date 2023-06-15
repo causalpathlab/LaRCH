@@ -207,7 +207,12 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
 
     for i in range(N):
         cell_type = cell_types[i].item()
-        X.loc[cell_id[i]] = Multinomial(round(D[i].item()), Dirichlet(torch.tensor(bulk.loc[:, types[cell_type]] + noise)).sample()).sample()
+        X.loc[cell_id[i]] = Multinomial(
+            round(D[i].item()), 
+            Dirichlet(
+                torch.tensor(bulk.loc[:, types[cell_type]] + noise)
+            ).sample()
+        ).sample()
 
     adata = ad.AnnData(X)
 

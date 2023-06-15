@@ -19,7 +19,7 @@ def main():
     bulk_file = args.bulk_file
     outfile = os.path.join(args.out_dir, f"sim_real_N{N}_noise{noise}_seed{seed}.h5ad")
 
-    sim_real(N, bulk_file, outfile, noise = noise, seed = seed)
+    sim_real(N, bulk_file, outfile, noise=noise, seed=seed)
 
 if __name__ == "__main__":
     main()

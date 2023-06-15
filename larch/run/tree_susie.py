@@ -48,10 +48,10 @@ def main():
 
         #%% Initialize the model and train
         now = datetime.datetime.now()
-        logger = CSVLogger(save_dir = "logs", name=model_id, version = now.strftime('%Y%m%d'))
+        logger = CSVLogger(save_dir="logs", name=model_id, version=now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = SuSiETree(adata, tree_depth = args.tree_depth, kl_weight_beta = args.kl_weight_beta, kl_weight = args.kl_weight)
+        model = SuSiETree(adata, tree_depth=args.tree_depth, kl_weight_beta=args.kl_weight_beta, kl_weight=args.kl_weight)
 
         seed_everything(args.seed, workers=True)
         #set deterministic=True for reproducibility
@@ -69,11 +69,11 @@ def main():
     #%% save output
     # spike, slab, standard deviation
         print("---Saving global parameters: spike, slab, standard deviation---\n")
-        model.get_parameters(save_dir = os.path.join(args.out_dir, model_id), overwrite = False)
+        model.get_parameters(save_dir=os.path.join(args.out_dir, model_id), overwrite = False)
         topics_np = model.get_latent_representation(deterministic=True, output_softmax_z=True)
         # topic proportions (after softmax)
         print("---Saving topic proportions (after softmax)---\n")
-        topics_df = pd.DataFrame(topics_np, index= model.adata.obs.index, columns = ['topic_' + str(j) for j in range(topics_np.shape[1])])
+        topics_df = pd.DataFrame(topics_np, index=model.adata.obs.index, columns=['topic_' + str(j) for j in range(topics_np.shape[1])])
         topics_df.to_csv(os.path.join(args.out_dir, model_id,"topics.csv"))
 
 if __name__ == "__main__":

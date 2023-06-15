@@ -30,7 +30,7 @@ def main():
     test_theta = model.get_latent_representation(test_data, deterministic=True, output_softmax_z=True)
 
     print("---Saving topic proportions (after softmax)---\n")
-    topics_df = pd.DataFrame(test_theta, index= test_data.obs.index, columns = ['topic_' + str(j) for j in range(test_theta.shape[1])])
+    topics_df = pd.DataFrame(test_theta, index=test_data.obs.index, columns=['topic_' + str(j) for j in range(test_theta.shape[1])])
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
     topics_df.to_csv(os.path.join(args.out_dir, "topics.csv"))
