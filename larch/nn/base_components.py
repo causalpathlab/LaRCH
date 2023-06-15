@@ -610,7 +610,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         var = var + pip * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
-        return self.safe_exp(mean + eps * torch.sqrt(var) - gene bias)
+        return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
 
     def sparse_kl_loss(
             self,
