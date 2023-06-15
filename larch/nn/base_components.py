@@ -579,8 +579,11 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             z: torch.Tensor):
         theta = self.soft_max(z)
         beta = self.get_beta(
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
+            self.spike_logit, 
+            self.slab_mean, 
+            self.slab_lnvar,
+            self.bias_d
+        )
         aa = self.safe_exp(torch.mm(theta, beta))
 
         beta_kl = self.sparse_kl_loss(
@@ -596,16 +599,22 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             self,
             spike_logit: torch.Tensor,
             slab_mean: torch.Tensor,
-            slab_lnvar: torch.Tensor,):
+            slab_lnvar: torch.Tensor,
+            bias_d: torch.Tensor,
+            eps=1e-12):
+        node_wise_mean = torch.mean(slab_mean, dim=-1, keepdim=True)
+        node_wise_std = torch.clamp(torch.std(slab_mean, dim=-1, keepdim=True), min=1e-12)
+        beta_mean = (slab_mean - node_wise_mean) / node_wise_std
+
         pip = self.get_pip(spike_logit)
 
-        mean = slab_mean * pip
+        mean = beta_mean * pip
         var = pip * (1 - pip) * torch.square(slab_mean)
         var = var + pip * torch.exp(slab_lnvar)
 
-        eps = torch.randn_like(var)
+        eps = torch.randn_like(var)      
 
-        return mean + eps * torch.sqrt(var)
+        return mean + eps * torch.sqrt(var) - bias_d        
 
     def sparse_kl_loss(
             self,
