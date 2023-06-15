@@ -680,7 +680,7 @@ class TreeDecoder(SpikeSlabDecoder):
             self.slab_lnvar, 
             self.bias_d
         )
-        aa = self.torch.mm(theta, torch.mm(self.A, beta))
+        aa = torch.mm(theta, torch.mm(self.A, beta))
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
