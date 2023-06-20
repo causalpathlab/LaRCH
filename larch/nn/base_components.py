@@ -579,8 +579,11 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             z: torch.Tensor):
         theta = self.soft_max(z)
         beta = self.get_beta(
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
+            self.spike_logit, 
+            self.slab_mean, 
+            self.slab_lnvar,
+            self.bias_d
+        )
         aa = self.safe_exp(torch.mm(theta, beta))
 
         beta_kl = self.sparse_kl_loss(
@@ -596,7 +599,8 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             self,
             spike_logit: torch.Tensor,
             slab_mean: torch.Tensor,
-            slab_lnvar: torch.Tensor,):
+            slab_lnvar: torch.Tensor,
+            bias_d: torch.Tensor):
         pip = self.get_pip(spike_logit)
 
         mean = slab_mean * pip
@@ -605,7 +609,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
 
         eps = torch.randn_like(var)
 
-        return mean + eps * torch.sqrt(var)
+        return mean + eps * torch.sqrt(var) - bias_d
 
     def sparse_kl_loss(
             self,
@@ -663,7 +667,7 @@ class TreeDecoder(SpikeSlabDecoder):
         # adjacency matrix for binary tree
         self.A = nn.Parameter(
             tree_util.pbt_adj(self.tree_depth).to_dense(), requires_grad=False
-            )
+        )
 
     def forward(
             self,
@@ -671,14 +675,20 @@ class TreeDecoder(SpikeSlabDecoder):
         theta = self.soft_max(z)
         # DOUBLE CHECK THIS
         beta = self.get_beta(
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
-        aa = self.safe_exp(torch.mm(theta, torch.mm(self.A, beta)))
+            self.spike_logit, 
+            self.slab_mean, 
+            self.slab_lnvar,
+            self.bias_d
+        )
+
+        topic_beta = torch.mm(self.A, beta)
+        rho = torch.mm(theta, topic_beta)
+        aa = self.safe_exp(rho)
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
             self.spike_logit, self.slab_mean, self.slab_lnvar
-            )
+        )
 
         return beta, beta_kl, theta, aa
 
