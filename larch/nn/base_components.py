@@ -578,7 +578,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
     def forward(
             self, 
             z: torch.Tensor):
-        theta = self.safe_exp(z) # relax to just positive, exp(z)? clamped?
+        theta = self.safe_exp(z, x_min=-5, x_max=5) # relax to just positive, exp(z)? clamped?
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
