@@ -506,12 +506,14 @@ class BayesianETMDecoder(nn.Module):
             self.slab_mean,
             self.slab_lnvar,
             self.bias_d)
+        aa = self.safe_exp(torch.mm(theta, beta))
+
         beta_kl = self.sparse_kl_loss(
             self.lnvar_0,
             self.slab_mean,
             self.slab_lnvar)
 
-        return beta, beta_kl, theta
+        return beta, beta_kl, theta, aa
 
     def get_beta(
             self,
@@ -639,6 +641,47 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         ## Combine both logit and Gaussian KL
         return torch.sum(kl_pip + pip_hat * kl_g)
 
+class TreeBayesianDecoder(BayesianETMDecoder):
+
+    def __init__(
+            self,
+            n_output: int,
+            v0=1,
+            tree_depth=3):
+        self.tree_depth = tree_depth
+        self.num_tree_leaves = tree_util.pbt_depth_to_leaves(self.tree_depth)
+        self.num_tree_nodes = tree_util.num_pbt_nodes(self.num_tree_leaves)
+
+        super().__init__(
+            n_output=n_output,
+            n_input=self.num_tree_nodes,
+            v0=v0
+        )
+
+        self.A = nn.Parameter(
+            tree_util.pbt_adj(self.tree_depth).to_dense(), requires_grad=False
+        )
+
+    def forward(
+            self,
+            z: torch.Tensor):
+        theta = self.soft_max(z)
+        beta = self.get_beta(
+            self.slab_mean,
+            self.slab_lnvar,
+            self.bias_d)
+
+        topic_beta = torch.mm(self.A, beta)
+        rho = torch.mm(theta, topic_beta)
+        aa = self.safe_exp(rho)
+
+        beta_kl = self.sparse_kl_loss(
+            self.lnvar_0,
+            self.slab_mean,
+            self.slab_lnvar)
+
+        return beta, beta_kl, theta, aa
+
 class TreeDecoder(SpikeSlabDecoder):
     """
     Decoder for tree spike and slab ETM
@@ -692,7 +735,7 @@ class TreeDecoder(SpikeSlabDecoder):
 
         return beta, beta_kl, theta, aa
 
-class TreeRelaxTheta(TreeDecoder):
+class TreeRelaxThetaDecoder(TreeDecoder):
     def __init__(
             self,
             n_output: int,
@@ -742,6 +785,43 @@ class TreeRelaxTheta(TreeDecoder):
         eps = torch.randn_like(var)
 
         return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
+
+class StandardBetaDecoder(TreeDecoder):
+    def __init__(
+            self, 
+            n_output: int,
+            pip0=0.1,
+            v0=1,
+            tree_depth=3):
+        super().__init__(
+            n_output=n_output,
+            pip0=pip0,
+            v0=v0,
+            tree_depth=tree_depth
+        )
+
+    def get_beta(
+            self,
+            spike_logit: torch.Tensor,
+            slab_mean: torch.Tensor,
+            slab_lnvar: torch.Tensor,
+            bias_d: torch.Tensor,
+            eps=1e-6):
+        beta_std, beta_mean = torch.mean(slab_mean, dim=-1, keepdim=True)
+        beta_std = torch.clamp(beta_std, min=eps)
+
+        normalized_slab_mean = (slab_mean - beta_mean) / beta_std
+
+        pip = self.get_pip(spike_logit)
+
+        mean = normalized_slab_mean * pip
+
+        var = pip * (1 - pip) * torch.square(slab_mean)
+        var = var + pip * torch.exp(slab_lnvar)
+
+        eps = torch.randn_like(var)
+
+        return mean + eps * torch.sqrt(var) - bias_d
 
 class StickTreeDecoder(TreeDecoder):
     """
