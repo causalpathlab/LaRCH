@@ -578,7 +578,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
     def forward(
             self, 
             z: torch.Tensor):
-        theta = self.safe_exp(z, x_min=-5, x_max=5) # relax to just positive, exp(z)? clamped?
+        theta = self.soft_max(z) # relax to just positive, exp(z)? clamped?
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
@@ -673,7 +673,7 @@ class TreeDecoder(SpikeSlabDecoder):
     def forward(
             self,
             z: torch.Tensor,):
-        theta = self.safe_exp(z)
+        theta = self.soft_max(z)
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
@@ -691,6 +691,55 @@ class TreeDecoder(SpikeSlabDecoder):
         )
 
         return beta, beta_kl, theta, aa
+
+class TreeRelaxTheta(TreeDecoder):
+    def __init__(
+            self,
+            n_output: int,
+            pip0=0.1,
+            v0=1,
+            tree_depth=3,):
+        super().__init__(
+            n_output=n_output,
+            pip0=pip0,
+            v0=v0,
+            tree_depth=tree_depth
+        )
+
+    def forward(
+            self,
+            z: torch.Tensor):
+        theta = self.safe_exp(z, x_min=-5, x_max=5)
+
+        beta = self.get_beta(
+            self.spike_logit,
+            self.slab_mean,
+            self.slab_lnvar,
+            self.bias_d
+        )
+
+        aa = torch.mm(theta, torch.mm(self.A, beta))
+
+        beta_kl = seelf.sparse_kl_loss(
+            self.logit_0, self.lnvar_0,
+            self.spike_logit, self.slab_mean, self.slab_lnvar
+        )
+
+        return beta, beta_kl, theta, aa
+
+    def get_beta(
+            self,
+            spike_logit: torch.Tensor,
+            slab_mean: torch.Tensor,
+            slab_lnvar: torch.Tensor,
+            bias_d: torch.Tensor):
+        pip = self.get_pip(spike_logit)
+
+        mean = slab_mean * pip
+        var = pip * (1 - pip) * torch.square(slab_mean)
+        var = var + pip * torch.exp(slab_lnvar)
+
+        eps = torch.randn_like(var)
 
 class StickTreeDecoder(TreeDecoder):
     """
