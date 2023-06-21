@@ -10,7 +10,7 @@ from larch.nn.base_components import (
     SpikeSlabDecoder, 
     TreeBayesianDecoder,
     TreeSpikeSlabDecoder, 
-    StickTreeDecoder, 
+    TreeStickSlabDecoder, 
     SuSiEDecoder, 
     SoftmaxSpikeSlabTreeDecoder, 
     TreeRelaxThetaDecoder,
@@ -290,7 +290,7 @@ class TreeModule(BaseModule):
             )
 
         elif decoder == "stick":
-            self.decoder = StickTreeDecoder(
+            self.decoder = TreeStickSlabDecoder(
                 n_output=self.n_input,
                 pip0=self.pip0_rho,
                 tree_depth=self.tree_depth

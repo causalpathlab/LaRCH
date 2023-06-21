@@ -823,7 +823,7 @@ class StandardBetaDecoder(TreeSpikeSlabDecoder):
 
         return mean + eps * torch.sqrt(var) - bias_d
 
-class StickTreeDecoder(TreeSpikeSlabDecoder):
+class TreeStickSlabDecoder(TreeSpikeSlabDecoder):
     """
     Decoder for Tree ETM with added stick breaking restriction on pip
     """

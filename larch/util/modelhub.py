@@ -260,7 +260,7 @@ class SpikeSlab(BaseModel):
 
         self.n_latent = n_latent
         self.module = FlatModule(
-            decoder="ssl"
+            decoder="ssl",
             n_genes=self.adata.n_vars,
             n_latent=self.n_latent,
             **model_kwargs,)
