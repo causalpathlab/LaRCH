@@ -251,9 +251,9 @@ class TreeModule(BaseModule):
 
     def __init__(
             self,
-            decoder="ssl",
             n_genes: int,
             tree_depth: int = 3,
+            decoder="ssl",
             n_layers_encoder_individual: int = 2,
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
