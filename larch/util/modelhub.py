@@ -298,7 +298,7 @@ class TreeSpikeSlab(BaseModel):
         self.tree_depth = tree_depth
         
         self.module = TreeModule(
-            decoder="ssl"
+            decoder="ssl",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
             **model_kwargs,
