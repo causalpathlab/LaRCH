@@ -213,9 +213,9 @@ class FlatModule(BaseModule):
     """
     def __init__(
             self,
-            decoder="ssl",
             n_genes: int,
             n_latent: int = 32,
+            decoder="ssl",
             n_layers_encoder_individual: int = 2,
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,

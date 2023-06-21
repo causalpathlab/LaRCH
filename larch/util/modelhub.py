@@ -260,9 +260,9 @@ class SpikeSlab(BaseModel):
 
         self.n_latent = n_latent
         self.module = FlatModule(
-            decoder="ssl",
             n_genes=self.adata.n_vars,
             n_latent=self.n_latent,
+            decoder="ssl",
             **model_kwargs,)
 
         self._model_summary_string = (
@@ -298,9 +298,9 @@ class TreeSpikeSlab(BaseModel):
         self.tree_depth = tree_depth
         
         self.module = TreeModule(
-            decoder="ssl",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
+            decoder="ssl",
             **model_kwargs,
         )
 
@@ -337,9 +337,9 @@ class SuSiETree(BaseModel):
         self.tree_depth = tree_depth
 
         self.module = TreeModule(
-            decoder="susie",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
+            decoder="susie",
             **model_kwargs,
         )
 
@@ -407,9 +407,9 @@ class TreeStickSlab(BaseModel):
         self.tree_depth = tree_depth
 
         self.module = TreeModule(
-            decoder="stick",
             n_genes=self.adata.n_vars,
             tree_depth = self.tree_depth,
+            decoder="stick",
             **model_kwargs
         )
 
@@ -497,9 +497,9 @@ class TreeSoftmaxSlab(BaseModel):
         self.tree_depth = tree_depth
 
         self.module = TreeModule(
-            decoder="softmax",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
+            decoder="softmax",
             **model_kwargs
         )
 
