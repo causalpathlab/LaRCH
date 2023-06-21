@@ -7,7 +7,7 @@ import numpy as np
 from anndata import AnnData
 from larch.util.util import DataSplitter, TrainRunner, BaseModelClass
 from larch.nn.TrainingPlan import TrainingPlan
-from larch.nn.module import SpikeSlabModule, TreeSpikeSlabModule, SuSiETreeModule, TreeStickSlabModule, TreeSoftmaxSlabModule
+from larch.nn.module import FlatModule, TreeModule
 
 logger = logging.getLogger(__name__)
 
@@ -259,7 +259,8 @@ class SpikeSlab(BaseModel):
         super().__init__(adata_seq)
 
         self.n_latent = n_latent
-        self.module = SpikeSlabModule(
+        self.module = FlatModule(
+            decoder="ssl"
             n_genes=self.adata.n_vars,
             n_latent=self.n_latent,
             **model_kwargs,)
@@ -296,7 +297,8 @@ class TreeSpikeSlab(BaseModel):
 
         self.tree_depth = tree_depth
         
-        self.module = TreeSpikeSlabModule(
+        self.module = TreeModule(
+            decoder="ssl"
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
             **model_kwargs,
@@ -334,7 +336,8 @@ class SuSiETree(BaseModel):
 
         self.tree_depth = tree_depth
 
-        self.module = SuSiETreeModule(
+        self.module = TreeModule(
+            decoder="susie",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
             **model_kwargs,
@@ -403,7 +406,8 @@ class TreeStickSlab(BaseModel):
 
         self.tree_depth = tree_depth
 
-        self.module = TreeStickSlabModule(
+        self.module = TreeModule(
+            decoder="stick",
             n_genes=self.adata.n_vars,
             tree_depth = self.tree_depth,
             **model_kwargs
@@ -492,7 +496,8 @@ class TreeSoftmaxSlab(BaseModel):
 
         self.tree_depth = tree_depth
 
-        self.module = TreeSoftmaxSlabModule(
+        self.module = TreeModule(
+            decoder="softmax",
             n_genes=self.adata.n_vars,
             tree_depth=self.tree_depth,
             **model_kwargs

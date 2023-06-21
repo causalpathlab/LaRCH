@@ -682,7 +682,7 @@ class TreeBayesianDecoder(BayesianETMDecoder):
 
         return beta, beta_kl, theta, aa
 
-class TreeDecoder(SpikeSlabDecoder):
+class TreeSpikeSlabDecoder(SpikeSlabDecoder):
     """
     Decoder for tree spike and slab ETM
     b_tg = sum_j A_tj b'_jg
@@ -735,7 +735,7 @@ class TreeDecoder(SpikeSlabDecoder):
 
         return beta, beta_kl, theta, aa
 
-class TreeRelaxThetaDecoder(TreeDecoder):
+class TreeRelaxThetaDecoder(TreeSpikeSlabDecoder):
     def __init__(
             self,
             n_output: int,
@@ -786,7 +786,7 @@ class TreeRelaxThetaDecoder(TreeDecoder):
 
         return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
 
-class StandardBetaDecoder(TreeDecoder):
+class StandardBetaDecoder(TreeSpikeSlabDecoder):
     def __init__(
             self, 
             n_output: int,
@@ -823,7 +823,7 @@ class StandardBetaDecoder(TreeDecoder):
 
         return mean + eps * torch.sqrt(var) - bias_d
 
-class StickTreeDecoder(TreeDecoder):
+class StickTreeDecoder(TreeSpikeSlabDecoder):
     """
     Decoder for Tree ETM with added stick breaking restriction on pip
     """
@@ -851,7 +851,7 @@ class StickTreeDecoder(TreeDecoder):
                 -torch.cumsum(sftpls_logit, dim=0) + sftpls_logit,
                 x_min=-5, x_max=5))
 
-class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
+class SoftmaxSpikeSlabTreeDecoder(TreeSpikeSlabDecoder):
     """
     Decoder for Spike Slab Tree model,
     with a softmax regularizer on the spike components
@@ -897,7 +897,7 @@ class SoftmaxSpikeSlabTreeDecoder(TreeDecoder):
         ## Combine both logit and Gaussian KL
         return torch.sum(kl_pip + pip_hat * kl_g) # return a number sum over [N_topics, N_genes]
 
-class SuSiEDecoder(TreeDecoder):
+class SuSiEDecoder(TreeSpikeSlabDecoder):
     """
     Decoder for the Sum of Single Effects Tree ETM
     """

@@ -5,7 +5,17 @@ from torch.distributions import Normal
 from torch.distributions import kl_divergence as kl
 from typing import Tuple
 from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
-from larch.nn.base_components import BayesianETMEncoder, SpikeSlabDecoder, TreeDecoder, StickTreeDecoder, SuSiEDecoder, SoftmaxSpikeSlabTreeDecoder
+from larch.nn.base_components import (
+    BayesianETMEncoder, 
+    SpikeSlabDecoder, 
+    TreeBayesianDecoder,
+    TreeSpikeSlabDecoder, 
+    StickTreeDecoder, 
+    SuSiEDecoder, 
+    SoftmaxSpikeSlabTreeDecoder, 
+    TreeRelaxThetaDecoder,
+    StandardBetaDecoder
+)
 from larch.util.util import _CONSTANTS
 
 torch.backends.cudnn.benchmark = True
@@ -197,13 +207,13 @@ class BaseModule(BaseModuleClass):
             kl_beta=kl_divergence_beta
         )
 
-class SpikeSlabModule(BaseModule):
+class FlatModule(BaseModule):
     """
-    The BETM Module
+    Generic module for flat topic models
     """
-
     def __init__(
             self,
+            decoder="ssl",
             n_genes: int,
             n_latent: int = 32,
             n_layers_encoder_individual: int = 2,
@@ -212,7 +222,8 @@ class SpikeSlabModule(BaseModule):
             pip0_rho: float = 0.1, 
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,
-            a0: float = 1e-4):
+            a0: float = 1e-4,):
+
         super().__init__(
             n_genes=n_genes,
             n_latent=n_latent,
@@ -225,19 +236,22 @@ class SpikeSlabModule(BaseModule):
             a0=a0,
         )
 
-        self.decoder = SpikeSlabDecoder(
-            n_input=self.n_latent,
-            n_output=self.n_input,
-            pip0=self.pip0_rho,
-        )
+        if decoder == "ssl":
+            self.decoder = SpikeSlabDecoder(
+                n_input=self.n_latent,
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+            )
+        else: raise ValueError("Invalid decoder")
 
-class TreeSpikeSlabModule(BaseModule):
+class TreeModule(BaseModule):
     """
-    Tree VAE
+    Generic module for tree structured topic models
     """
 
     def __init__(
             self,
+            decoder="ssl",
             n_genes: int,
             tree_depth: int = 3,
             n_layers_encoder_individual: int = 2,
@@ -260,112 +274,38 @@ class TreeSpikeSlabModule(BaseModule):
             kl_weight_beta=kl_weight_beta,
             a0=a0,
         )
-
         self.tree_depth = tree_depth
 
-        self.decoder = TreeDecoder(
-            n_output=self.n_input,
-            pip0=self.pip0_rho,
-            tree_depth=self.tree_depth)
+        if decoder == "ssl":
+            self.decoder = TreeSpikeSlabDecoder(
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+                tree_depth=self.tree_depth
+            )
 
-class TreeStickSlabModule(BaseModule):
-    """
-    Tree VAE with stick breaking pip
-    """
+        elif decoder == "bayesian":
+            self.decoder = TreeBayesianDecoder(
+                n_output=self.n_input,
+                tree_depth=self.tree_depth
+            )
 
-    def __init__(
-            self,
-            n_genes: int,
-            tree_depth: int = 3,
-            n_layers_encoder_individual: int = 2,
-            dim_hidden_encoder: int = 128,
-            log_variational: bool = True,
-            pip0_rho: float = 0.1,
-            kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
-        n_latent = 2 ** (tree_depth - 1)
+        elif decoder == "stick":
+            self.decoder = StickTreeDecoder(
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+                tree_depth=self.tree_depth
+            )
 
-        super().__init__(
-            n_genes=n_genes,
-            n_latent=n_latent,
-            n_layers_encoder_individual=n_layers_encoder_individual,
-            dim_hidden_encoder=dim_hidden_encoder,
-            log_variational=log_variational,
-            pip0_rho=pip0_rho,
-            kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta
-        )
+        elif decoder == "softmax":
+            self.decoder = SoftmaxSpikeSlabTreeDecoder(
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+                tree_depth=self.tree_depth)
 
-        self.tree_depth = tree_depth
+        elif decoder == "susie":
+            self.decoder = SuSiEDecoder(
+                n_output=self.n_input,
+                tree_depth=self.tree_depth)
 
-        self.decoder = StickTreeDecoder(
-            n_output=self.n_input,
-            pip0=self.pip0_rho,
-            tree_depth=self.tree_depth
-        )
-
-class TreeSoftmaxSlabModule(BaseModule):
-    """
-    Tree VAE with softmax regularization on pip
-    """
-    def __init__(
-            self,
-            n_genes: int,
-            tree_depth: int = 3,
-            n_layers_encoder_individual: int = 2,
-            dim_hidden_encoder: int = 128,
-            log_variational: bool = True,
-            pip0_rho: float = 0.1,
-            kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
-        n_latent = 2 ** (tree_depth - 1)
-
-        super().__init__(
-            n_genes=n_genes,
-            n_latent=n_latent,
-            n_layers_encoder_individual=n_layers_encoder_individual,
-            dim_hidden_encoder=dim_hidden_encoder,
-            log_variational=log_variational,
-            pip0_rho=pip0_rho,
-            kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta
-        )
-
-        self.tree_depth = tree_depth
-
-        self.decoder = SoftmaxSpikeSlabTreeDecoder(
-            self.n_input,
-            pip0=self.pip0_rho,
-            tree_depth=self.tree_depth)
-
-class SuSiETreeModule(BaseModule):
-    """
-    Sum of single effects tree VAE
-    """
-    def __init__(
-            self,
-            n_genes: int,
-            tree_depth: int = 3,
-            n_layers_encoder_individual: int = 2,
-            dim_hidden_encoder: int = 128,
-            log_variational: bool = True,
-            kl_weight: float = 1.0,
-            kl_weight_beta: float = 1.0,):
-        n_latent = 2 ** (tree_depth - 1)
-
-        super().__init__(
-            n_genes=n_genes,
-            n_latent=n_latent,
-            n_layers_encoder_individual=n_layers_encoder_individual,
-            dim_hidden_encoder=dim_hidden_encoder,
-            log_variational=log_variational,
-            kl_weight=kl_weight,
-            kl_weight_beta=kl_weight_beta
-        )
-
-        self.tree_depth = tree_depth
-
-        self.decoder = SuSiEDecoder(
-            self.n_input,
-            tree_depth=self.tree_depth)
+        else: raise ValueError("Invalid decoder")
 
