@@ -720,7 +720,7 @@ class TreeRelaxTheta(TreeDecoder):
 
         aa = torch.mm(theta, torch.mm(self.A, beta))
 
-        beta_kl = seelf.sparse_kl_loss(
+        beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0,
             self.spike_logit, self.slab_mean, self.slab_lnvar
         )
@@ -740,6 +740,8 @@ class TreeRelaxTheta(TreeDecoder):
         var = var + pip * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
+
+        return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
 
 class StickTreeDecoder(TreeDecoder):
     """
