@@ -582,10 +582,10 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
-            self.slab_lnvar, 
+            self.slab_lnvar,
             self.bias_d
-        ) # exp? clamped
-        aa = torch.mm(theta, beta) # no exp
+        )
+        aa = self.safe_exp(torch.mm(theta, beta))
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
@@ -602,7 +602,6 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             slab_mean: torch.Tensor,
             slab_lnvar: torch.Tensor,
             bias_d: torch.Tensor):
-        # standardize slab mean first
         pip = self.get_pip(spike_logit)
 
         mean = slab_mean * pip
@@ -610,7 +609,8 @@ class SpikeSlabDecoder(BayesianETMDecoder):
         var = var + pip * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
-        return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
+
+        return mean + eps * torch.sqrt(var) - bias_d
 
     def sparse_kl_loss(
             self,
@@ -668,7 +668,7 @@ class TreeDecoder(SpikeSlabDecoder):
         # adjacency matrix for binary tree
         self.A = nn.Parameter(
             tree_util.pbt_adj(self.tree_depth).to_dense(), requires_grad=False
-            )
+        )
 
     def forward(
             self,
@@ -677,10 +677,13 @@ class TreeDecoder(SpikeSlabDecoder):
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
-            self.slab_lnvar, 
+            self.slab_lnvar,
             self.bias_d
         )
-        aa = torch.mm(theta, torch.mm(self.A, beta))
+
+        topic_beta = torch.mm(self.A, beta)
+        rho = torch.mm(theta, topic_beta)
+        aa = self.safe_exp(rho)
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
