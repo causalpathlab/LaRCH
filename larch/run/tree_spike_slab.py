@@ -21,7 +21,7 @@ def main():
     parser.add_argument('--kl_weight_beta', type=float,
                         help='weight for global parameter beta in the kl term', default=1) # 1
     parser.add_argument('--a0', type=float,
-                        help='hyperparameter for dirichlet likelihood', default=1e-4)
+                        help='hyperparameter for dirichlet likelihood', default=1e-6)
     parser.add_argument('--train_size', type=float,
                         help='set to 1 to use full dataset for training; set to 0.9 for train(0.9)/test(0.1) split',
                         default=1)

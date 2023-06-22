@@ -506,7 +506,8 @@ class BayesianETMDecoder(nn.Module):
             self.slab_mean,
             self.slab_lnvar,
             self.bias_d)
-        aa = self.safe_exp(torch.mm(theta, beta))
+        
+        aa = torch.mm(theta, self.safe_exp(beta))
 
         beta_kl = self.sparse_kl_loss(
             self.lnvar_0,
@@ -587,7 +588,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
             self.slab_lnvar,
             self.bias_d
         )
-        aa = self.safe_exp(torch.mm(theta, beta))
+        aa = torch.mm(theta, self.safe_exp(beta))
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
@@ -671,9 +672,8 @@ class TreeBayesianDecoder(BayesianETMDecoder):
             self.slab_lnvar,
             self.bias_d)
 
-        topic_beta = torch.mm(self.A, beta)
-        rho = torch.mm(theta, topic_beta)
-        aa = self.safe_exp(rho)
+        topic_beta = torch.mm(self.A, self.safe_exp(beta))
+        aa = torch.mm(theta, topic_beta)
 
         beta_kl = self.sparse_kl_loss(
             self.lnvar_0,
@@ -724,9 +724,8 @@ class TreeSpikeSlabDecoder(SpikeSlabDecoder):
             self.bias_d
         )
 
-        topic_beta = torch.mm(self.A, beta)
-        rho = torch.mm(theta, topic_beta)
-        aa = self.safe_exp(rho)
+        topic_beta = torch.mm(self.A, self.safe_exp(beta))
+        aa = torch.mm(theta, topic_beta)
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0, 
@@ -761,7 +760,9 @@ class TreeRelaxThetaDecoder(TreeSpikeSlabDecoder):
             self.bias_d
         )
 
-        aa = torch.mm(theta, torch.mm(self.A, beta))
+        topic_beta = torch.mm(self.A, self.safe_exp(beta))
+
+        aa = torch.mm(theta, topic_beta)
 
         beta_kl = self.sparse_kl_loss(
             self.logit_0, self.lnvar_0,
@@ -769,22 +770,6 @@ class TreeRelaxThetaDecoder(TreeSpikeSlabDecoder):
         )
 
         return beta, beta_kl, theta, aa
-
-    def get_beta(
-            self,
-            spike_logit: torch.Tensor,
-            slab_mean: torch.Tensor,
-            slab_lnvar: torch.Tensor,
-            bias_d: torch.Tensor):
-        pip = self.get_pip(spike_logit)
-
-        mean = slab_mean * pip
-        var = pip * (1 - pip) * torch.square(slab_mean)
-        var = var + pip * torch.exp(slab_lnvar)
-
-        eps = torch.randn_like(var)
-
-        return self.safe_exp(mean + eps * torch.sqrt(var) - bias_d)
 
 class StandardBetaDecoder(TreeSpikeSlabDecoder):
     def __init__(

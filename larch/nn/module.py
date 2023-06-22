@@ -58,7 +58,6 @@ class BaseModule(BaseModuleClass):
             xx: torch.Tensor,
             aa: torch.Tensor,
             a0: float = 1e-4) -> torch.Tensor:
-        # TODO add a0 = 1e-4
         '''
         # Dirichlet log-likelihood:
         # lgamma(sum a) - lgamma(sum a + x)
