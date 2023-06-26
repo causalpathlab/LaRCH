@@ -506,7 +506,7 @@ class BayesianETMDecoder(nn.Module):
             self.slab_mean,
             self.slab_lnvar,
             self.bias_d)
-        
+
         aa = torch.mm(theta, self.safe_exp(beta))
 
         beta_kl = self.sparse_kl_loss(
@@ -733,6 +733,24 @@ class TreeSpikeSlabDecoder(SpikeSlabDecoder):
         )
 
         return beta, beta_kl, theta, aa
+
+class FullTreeSpikeSlabDecoder(TreeSpikeSlabDecoder):
+    def __init__(
+            self,
+            n_output: int,
+            pip0=0.1,
+            v0=1,
+            tree_depth=3):
+        super().__init__(
+            n_output=n_output,
+            tree_depth=tree_depth,
+            pip0=pip0,
+            v0=v0
+        )
+
+        self.A = nn.Parameter(
+            tree_util.pbt_full_adj(self.tree_depth).to_dense(), requires_grad=False
+        )
 
 class TreeRelaxThetaDecoder(TreeSpikeSlabDecoder):
     def __init__(

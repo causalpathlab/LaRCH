@@ -14,7 +14,8 @@ from larch.nn.base_components import (
     SuSiEDecoder, 
     SoftmaxSpikeSlabTreeDecoder, 
     TreeRelaxThetaDecoder,
-    StandardBetaDecoder
+    StandardBetaDecoder,
+    FullTreeSpikeSlabDecoder
 )
 from larch.util.util import _CONSTANTS
 
@@ -32,6 +33,7 @@ class BaseModule(BaseModuleClass):
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
             pip0_rho: float = 0.1, 
+            v0: float = 1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,
             a0: float = 1e-4):
@@ -41,6 +43,7 @@ class BaseModule(BaseModuleClass):
         self.n_latent = n_latent
         self.log_variational = log_variational
         self.pip0_rho = pip0_rho
+        self.v0 = v0
         self.kl_weight = kl_weight
         self.kl_weight_beta = kl_weight_beta
         self.a0 = a0
@@ -219,6 +222,7 @@ class FlatModule(BaseModule):
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
             pip0_rho: float = 0.1, 
+            v0: float = 1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,
             a0: float = 1e-4,):
@@ -230,6 +234,7 @@ class FlatModule(BaseModule):
             dim_hidden_encoder=dim_hidden_encoder,
             log_variational=log_variational,
             pip0_rho=pip0_rho,
+            v0=v0,
             kl_weight=kl_weight,
             kl_weight_beta=kl_weight_beta,
             a0=a0,
@@ -240,6 +245,14 @@ class FlatModule(BaseModule):
                 n_input=self.n_latent,
                 n_output=self.n_input,
                 pip0=self.pip0_rho,
+                v0=self.v0
+            )
+        elif decoder == "bayesian":
+            self.decoder = BayesianETMEncoder(
+                n_input=self.n_latent,
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+                v0=self.v0
             )
         else: raise ValueError("Invalid decoder")
 
@@ -257,10 +270,14 @@ class TreeModule(BaseModule):
             dim_hidden_encoder: int = 128,
             log_variational: bool = True,
             pip0_rho: float = 0.1,
+            v0: float = 1,
             kl_weight: float = 1.0,
             kl_weight_beta: float = 1.0,
             a0: float = 1e-4,):
-        n_latent = 2 ** (tree_depth - 1)
+        if decoder == "full_ssl":
+            n_latent = 2 ** tree_depth - 1
+        else:
+            n_latent = 2 ** (tree_depth - 1)
 
         super().__init__(
             n_genes=n_genes,
@@ -279,12 +296,22 @@ class TreeModule(BaseModule):
             self.decoder = TreeSpikeSlabDecoder(
                 n_output=self.n_input,
                 pip0=self.pip0_rho,
+                v0=self.v0,
                 tree_depth=self.tree_depth
             )
 
         elif decoder == "bayesian":
             self.decoder = TreeBayesianDecoder(
                 n_output=self.n_input,
+                v0=self.v0,
+                tree_depth=self.tree_depth
+            )
+
+        elif decoder == "full_ssl":
+            self.decoder = FullTreeSpikeSlabDecoder(
+                n_output=self.n_input,
+                pip0=self.pip0_rho,
+                v0=self.v0,
                 tree_depth=self.tree_depth
             )
 
@@ -292,6 +319,7 @@ class TreeModule(BaseModule):
             self.decoder = TreeStickSlabDecoder(
                 n_output=self.n_input,
                 pip0=self.pip0_rho,
+                v0=self.v0,
                 tree_depth=self.tree_depth
             )
 
@@ -299,12 +327,16 @@ class TreeModule(BaseModule):
             self.decoder = SoftmaxSpikeSlabTreeDecoder(
                 n_output=self.n_input,
                 pip0=self.pip0_rho,
-                tree_depth=self.tree_depth)
+                v0=self.v0,
+                tree_depth=self.tree_depth
+            )
 
         elif decoder == "susie":
             self.decoder = SuSiEDecoder(
                 n_output=self.n_input,
-                tree_depth=self.tree_depth)
+                v0=self.v0,
+                tree_depth=self.tree_depth
+            )
 
         else: raise ValueError("Invalid decoder")
 

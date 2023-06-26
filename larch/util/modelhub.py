@@ -309,6 +309,45 @@ class TreeSpikeSlab(BaseModel):
             + "\n n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
 
+class FullTreeSpikeSlab(BaseModel):
+    """
+    full tree spike slab
+
+    Parameters
+    ----------
+    adata_seq
+        AnnData object that has been registered via :func:`data.setup_anndata`
+        and contains data.
+    tree_depth
+        depth of the tree
+    **model_kwargs
+        Keyword args for :class:`~module.TreeSpikeSlabModule`
+
+    Examples
+    --------
+    """
+
+    def __init__(
+            self,
+            adata_seq: AnnData,
+            tree_depth: int = 3,
+            **model_kwargs,):
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
+
+        self.module = TreeModule(
+            n_genes=self.adata.n_vars,
+            tree_depth=self.tree_depth,
+            decoder="full_ssl",
+            **model_kwargs,
+        )
+
+        self._model_summary_string = (
+            "full_tree_spike_slab with the following params: "
+            + "\n n_genes: {}, tree_depth: {}"
+        ).format(self.adata.n_vars, self.tree_depth)
+
 class SuSiETree(BaseModel):
     """
     susie_tree model for single-cell data.
