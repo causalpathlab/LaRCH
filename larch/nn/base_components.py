@@ -609,7 +609,8 @@ class SpikeSlabDecoder(BayesianETMDecoder):
 
         mean = slab_mean * pip
         var = pip * (1 - pip) * torch.square(slab_mean)
-        var = var + pip * torch.exp(slab_lnvar)
+        var = var + torch.square(pip) * torch.exp(slab_lnvar)
+        var = var + pip * (1 - pip) * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
 
@@ -820,7 +821,8 @@ class StandardBetaDecoder(TreeSpikeSlabDecoder):
         mean = normalized_slab_mean * pip
 
         var = pip * (1 - pip) * torch.square(slab_mean)
-        var = var + pip * torch.exp(slab_lnvar)
+        var = var + torch.square(pip) * torch.exp(slab_lnvar)
+        var = var + pip * (1 - pip) * torch.exp(slab_lnvar)
 
         eps = torch.randn_like(var)
 
