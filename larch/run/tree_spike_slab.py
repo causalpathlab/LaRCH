@@ -75,8 +75,8 @@ def main():
             )
         model.save(os.path.join(args.out_dir, model_id), overwrite=True, save_anndata=False)
         print(f"Model saved at:", os.path.join(args.out_dir, model_id))
-    #%% save output
-    # spike, slab, standard deviation
+        #%% save output
+        # spike, slab, standard deviation
         print("---Saving global parameters: spike, slab, standard deviation---\n")
         model.get_parameters(save_dir=os.path.join(args.out_dir, model_id), overwrite=False)
 
