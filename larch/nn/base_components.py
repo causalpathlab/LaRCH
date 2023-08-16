@@ -454,7 +454,6 @@ class BayesianETMEncoder(nn.Module):
         self.var_encoder = nn.Linear(n_hidden, n_output)
 
     def forward(self, x: torch.Tensor, *cat_list: int):
-        # TODO: layer normalizaton
         if self.log_variational:
             x_ = torch.log(1 + x)
 
@@ -521,7 +520,6 @@ class BayesianETMDecoder(nn.Module):
             slab_mean: torch.Tensor,
             slab_lnvar: torch.Tensor,
             bias_d: torch.Tensor,):
-        # normalize betas per node, keep track of node means and 
         mean = slab_mean
 
         var = torch.exp(slab_lnvar)
@@ -581,7 +579,7 @@ class SpikeSlabDecoder(BayesianETMDecoder):
     def forward(
             self, 
             z: torch.Tensor):
-        theta = self.soft_max(z) # relax to just positive, exp(z)? clamped?
+        theta = self.soft_max(z)
         beta = self.get_beta(
             self.spike_logit, 
             self.slab_mean, 
