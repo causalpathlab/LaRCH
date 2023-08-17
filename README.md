@@ -57,25 +57,26 @@ spike_slab [-h] [--nLV NLV] [--EPOCHS EPOCHS] [--lr LR] [--bs BS] [--train_size 
 ### Tree Spike and Slab model
 
 ```
-tree_spike_slab [-h] [--tree_depth TREE_DEPTH] [--pip0 PIP0] [--EPOCHS EPOCHS] [--lr LR]
-               [--bs BS] [--kl_weight KL_WEIGHT] [--kl_weight_beta KL_WEIGHT_BETA]
-               [--train_size TRAIN_SIZE] [--seed SEED] [--use_gpu USE_GPU]
-               [--check_val_every_n_epoch CHECK_VAL_EVERY_N_EPOCH] [--data_file DATA_FILE]
-               [--data_id DATA_ID]
+usage: tree_spike_slab [-h] [--tree_depth TREE_DEPTH] [--EPOCHS EPOCHS] [--lr LR] [--bs BS]
+                       [--pip0 PIP0] [--kl_weight KL_WEIGHT] [--kl_weight_beta KL_WEIGHT_BETA]
+                       [--a0 A0] [--train_size TRAIN_SIZE] [--seed SEED] [--use_gpu USE_GPU]
+                       [--check_val_every_n_epoch CHECK_VAL_EVERY_N_EPOCH] [--data_file DATA_FILE]
+                       [--data_id DATA_ID] [--out_dir OUT_DIR]
 ```
 
 ```
 -h, --help            show this help message and exit
 --tree_depth TREE_DEPTH
                       tree depth
---pip0 PIP0           pip0
 --EPOCHS EPOCHS       EPOCHS
 --lr LR               learning_rate
 --bs BS               Batch size
+--pip0 PIP0           pip0
 --kl_weight KL_WEIGHT
                       weight for kl local term
 --kl_weight_beta KL_WEIGHT_BETA
                       weight for global parameter beta in the kl term
+--a0 A0               hyperparameter for dirichlet likelihood
 --train_size TRAIN_SIZE
                       set to 1 to use full dataset for training; set to 0.9 for
                       train(0.9)/test(0.1) split
@@ -86,6 +87,7 @@ tree_spike_slab [-h] [--tree_depth TREE_DEPTH] [--pip0 PIP0] [--EPOCHS EPOCHS] [
 --data_file DATA_FILE
                       filepath to h5ad file
 --data_id DATA_ID     data id
+--out_dir OUT_DIR     directory for output files
 ```
 
 ### SuSiE tree model
