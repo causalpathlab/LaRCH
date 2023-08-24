@@ -32,6 +32,7 @@ def main():
     parser.add_argument('--data_file', help='filepath to h5ad file', default='data/sim_tree.h5ad')
     parser.add_argument('--data_id', help='data id', default='sim_data')
     parser.add_argument('--out_dir', help='directory for output files', default='models')
+    parser.add_argument('--log_dir', help='directory for log files', default='logs')
     args = parser.parse_args()
     print(args)
 
@@ -51,7 +52,7 @@ def main():
 
         #%% Initialize the model and train
         now = datetime.datetime.now()
-        logger = CSVLogger(save_dir="logs", name=model_id, version=now.strftime('%Y%m%d'))
+        logger = CSVLogger(save_dir=args.log_dir, name=model_id, version=now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
         model = FullTreeSpikeSlab(adata, 
