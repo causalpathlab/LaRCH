@@ -11,6 +11,7 @@ from larch.util.modelhub import BayesianETM
 
 def main():
     parser = argparse.ArgumentParser(description='Parameters for NN')
+    parser.add_argument('--nLV', type=int, help='User specified nLV', default=32) # 4, 32, 128
     parser.add_argument('--EPOCHS', type=int, help='EPOCHS', default=2000) # 1000
     parser.add_argument('--lr', type=float, help='learning_rate', default=1e-2) # 0.01
     parser.add_argument('--bs', type=int, help='Batch size', default=128) # 128
@@ -35,7 +36,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model_id = f"BALSAM_{args.data_id}_ep{args.EPOCHS}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+    model_id = f"BALSAM_{args.data_id}_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
     if os.path.exists(os.path.join(args.out_dir, model_id)):
@@ -55,6 +56,7 @@ def main():
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
         model = BayesianETM(adata, 
+            n_latent=args.nLV,
             kl_weight_beta=args.kl_weight_beta, 
             kl_weight=args.kl_weight,
             a0=args.a0
