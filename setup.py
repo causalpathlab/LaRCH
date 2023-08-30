@@ -13,7 +13,7 @@ setup(
         'tree_susie = larch.run.tree_susie:main',
         'sc_data_sim = larch.run.sim_real:main',
         'BALSAM = larch.run.flat_bayesian:main',
-        'tree_BALSAM = larch.run.tree_bayesian']
+        'tree_BALSAM = larch.run.tree_bayesian:main']
     },
     requires=['pandas', 'torch', 'functools', 'h5py', 'numpy', 'anndata', 'pytorch_lightning', 'pickle', 'scanpy']
 )
