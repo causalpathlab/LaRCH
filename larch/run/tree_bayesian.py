@@ -56,7 +56,7 @@ def main():
         logger = CSVLogger(save_dir=args.log_dir, name=model_id, version=now.strftime('%Y%m%d'))
         model_kwargs = {"lr": args.lr, 'use_gpu':args.use_gpu, 'train_size':args.train_size}
 
-        model = TreeSpikeSlab(adata, 
+        model = TreeBayesian(adata, 
             tree_depth=args.tree_depth, 
             pip0_rho=args.pip0, 
             kl_weight_beta=args.kl_weight_beta, 
