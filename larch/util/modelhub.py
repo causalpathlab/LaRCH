@@ -219,29 +219,33 @@ class BaseModel(BaseModelClass):
                 os.path.join(save_dir, "model_parameters"), 
                 exist_ok=overwrite)
 
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "spike_logit_rho.txt"
-            ), decoder.spike_logit.cpu().numpy()
-        )
+        if hasattr(decoder, 'spike_logit'):
+            np.savetxt(
+                os.path.join(
+                    save_dir, "model_parameters", "spike_logit_rho.txt"
+                ), decoder.spike_logit.cpu().numpy()
+            )
 
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_mean_rho.txt"
-            ), decoder.slab_mean.cpu().numpy()
-        )
+        if hasattr(decoder, 'slab_mean'):
+            np.savetxt(
+                os.path.join(
+                    save_dir, "model_parameters", "slab_mean_rho.txt"
+                ), decoder.slab_mean.cpu().numpy()
+            )
 
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "slab_lnvar_rho.txt"
-            ), decoder.slab_lnvar.cpu().numpy()
-        )
+        if hasattr(decoder, 'slab_lnvar'):
+            np.savetxt(
+                os.path.join(
+                    save_dir, "model_parameters", "slab_lnvar_rho.txt"
+                ), decoder.slab_lnvar.cpu().numpy()
+            )
 
-        np.savetxt(
-            os.path.join(
-                save_dir, "model_parameters", "bias_gene.txt"
-            ), decoder.bias_d.cpu().numpy()
-        )
+        if hasattr(decoder, 'bias_d'):
+            np.savetxt(
+                os.path.join(
+                    save_dir, "model_parameters", "bias_gene.txt"
+                ), decoder.bias_d.cpu().numpy()
+            )
 
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
