@@ -7,6 +7,7 @@ from typing import Tuple
 from larch.nn.base_model import BaseModuleClass, LossRecorder, auto_move_data
 from larch.nn.base_components import (
     BayesianETMEncoder, 
+    BayesianETMDecoder,
     SpikeSlabDecoder, 
     TreeBayesianDecoder,
     TreeSpikeSlabDecoder, 
