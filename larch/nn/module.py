@@ -248,10 +248,9 @@ class FlatModule(BaseModule):
                 v0=self.v0
             )
         elif decoder == "bayesian":
-            self.decoder = BayesianETMEncoder(
+            self.decoder = BayesianETMDecoder(
                 n_input=self.n_latent,
                 n_output=self.n_input,
-                pip0=self.pip0_rho,
                 v0=self.v0
             )
         else: raise ValueError("Invalid decoder")

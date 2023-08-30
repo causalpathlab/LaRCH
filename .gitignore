@@ -151,3 +151,7 @@ misc/
 *.Rmd
 *.md
 *.png
+
+*_old*
+
+data/

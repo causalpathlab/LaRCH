@@ -246,6 +246,30 @@ class BaseModel(BaseModelClass):
     def load_state_dict(self, state):
         self.module.load_state_dict(state)
 
+class BayesianETM(BaseModel):
+    """
+    Basic Bayesian ETM
+    """
+
+    def __init__(
+            self,
+            adata_seq: AnnData,
+            n_latent: int = 32,
+            **model_kwargs,):
+        super().__init__(adata_seq)
+
+        self.n_latent = n_latent
+        self.module = FlatModule(
+            n_genes=self.adata.n_vars,
+            n_latent=self.n_latent,
+            decoder="bayesian",
+            **model_kwargs,)
+
+        self._model_summary_string = (
+            "Bayesian ETM with the following params: "
+            + "\n n_latent: {}, n_genes: {}"
+        ).format(n_latent, self.adata.n_vars)
+
 class SpikeSlab(BaseModel):
     """
     Basic Spike and Slab Model
@@ -270,6 +294,45 @@ class SpikeSlab(BaseModel):
             + "\n n_latent: {}, n_genes: {}"
         ).format(n_latent, self.adata.n_vars)
 
+class TreeBayesian(BaseModel):
+    """
+    tree Bayesian
+
+    Parameters
+    ----------
+    adata_seq
+        AnnData object that has been registered via :func:`data.setup_anndata`
+        and contains data.
+    tree_depth
+        depth of the tree
+    **model_kwargs
+        Keyword args for :class:`~module.TreeModule`
+
+    Examples
+    --------
+    """
+
+    def __init__(
+            self,
+            adata_seq: AnnData,
+            tree_depth: int = 3,
+            **model_kwargs,):
+        super().__init__(adata_seq)
+
+        self.tree_depth = tree_depth
+        
+        self.module = TreeModule(
+            n_genes=self.adata.n_vars,
+            tree_depth=self.tree_depth,
+            decoder="bayesian",
+            **model_kwargs,
+        )
+
+        self._model_summary_string = (
+            "tree_bayesian with the following params: "
+            + "\n n_genes: {}, tree_depth: {}"
+        ).format(self.adata.n_vars, self.tree_depth)
+
 class TreeSpikeSlab(BaseModel):
     """
     tree spike slab
@@ -282,7 +345,7 @@ class TreeSpikeSlab(BaseModel):
     tree_depth
         depth of the tree
     **model_kwargs
-        Keyword args for :class:`~module.TreeSpikeSlabModule`
+        Keyword args for :class:`~module.TreeModule`
 
     Examples
     --------
