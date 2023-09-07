@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+import numpy as np
 import anndata as ad
 import torch
 from torch.distributions import Normal, Dirichlet, Multinomial, NegativeBinomial, Uniform
@@ -203,7 +204,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
 
     D = torch.round(torch.exp(torch.randn((N,))) * G)
 
-    X = pd.DataFrame(columns = genes, index = cell_id)
+    X = pd.DataFrame(columns = genes, index = cell_id, dtype=np.int8)
 
     for i in range(N):
         cell_type = cell_types[i].item()
