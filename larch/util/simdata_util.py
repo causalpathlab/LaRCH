@@ -204,7 +204,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
 
     D = torch.round(torch.exp(torch.randn((N,))) * G)
 
-    X = pd.DataFrame(columns = genes, index = cell_id, dtype=np.int8)
+    X = pd.DataFrame(columns = genes, index = cell_id)
 
     for i in range(N):
         cell_type = cell_types[i].item()
@@ -215,7 +215,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
             ).sample()
         ).sample()
 
-    adata = ad.AnnData(X, dtype=X.dtype)
+    adata = ad.AnnData(X, dtype=np.int8)
 
     adata.obs = pd.DataFrame({
         "cell_type": cell_type_names,
