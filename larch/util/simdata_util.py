@@ -215,7 +215,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
             ).sample()
         ).sample()
 
-    adata = ad.AnnData(X, dtype=np.int8)
+    adata = ad.AnnData(X, dtype=np.float32)
 
     adata.obs = pd.DataFrame({
         "cell_type": cell_type_names,
