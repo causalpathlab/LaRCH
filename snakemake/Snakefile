@@ -50,7 +50,7 @@ rule run_tree_spike_slab:
 			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
 			'topics.csv')
 	shell:
-		'tree_spike_slab ' 
+		'python {WORKING_DIR}/larch/run/test_run.py ' 
 			'--tree_depth {TREE_DEPTH} '
 			'--EPOCHS {EPOCHS} '
 			'--lr {LR} '
