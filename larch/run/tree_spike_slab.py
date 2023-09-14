@@ -40,7 +40,7 @@ def main():
     model_id = f"tree_spike_slab_{args.data_id}_ep{args.EPOCHS}_treeD{args.tree_depth}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_pip{args.pip0}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
-    if os.path.exists(os.path.join(args.out_dir, model_id)):
+    if os.path.exists(os.path.join(args.out_dir, model_id, "topics.csv")):
         print(os.path.exists(os.path.join(args.out_dir, model_id)))
         print(os.path.join(args.out_dir, model_id))
         print("Model already exists, skip training")
