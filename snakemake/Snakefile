@@ -28,7 +28,9 @@ DATA_ID = config["TREE_VAE_PARAMETERS"]["DATA_ID"]
 
 rule all:
 	input: 
-		os.path.join(OUTPUT_DIR, "NMI.csv")
+		expand(os.path.join(OUTPUT_DIR, 
+			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}.0_pip{PIP0}_kl{KL_WEIGHT}.0_klbeta{KL_WEIGHT_BETA}.0_seed{TRAIN_SEED}",
+			'topics.csv'), noise=NOISE_PARAMS, seed=SEED_PARAMS)
 
 expand("{noise}_{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
 
@@ -64,28 +66,28 @@ rule run_tree_spike_slab:
 			'--out_dir {OUTPUT_DIR} '
 			'--log_dir {LOG_DIR}'
 
-rule get_NMI:
-	input:     
-		sc_data = os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad"),
-		topics = os.path.join(OUTPUT_DIR, 
-			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}.0_pip{PIP0}_kl{KL_WEIGHT}.0_klbeta{KL_WEIGHT_BETA}.0_seed{TRAIN_SEED}",
-			'topics.csv')
-	threads: 4
-	output:
-		os.path.join(OUTPUT_DIR,
-			"NMI",
-			f"{DATA_ID}_" + "{noise}_{seed}.csv")
-	shell:
-		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.topics} {output}'
+# rule get_NMI:
+# 	input:     
+# 		sc_data = os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad"),
+# 		topics = os.path.join(OUTPUT_DIR, 
+# 			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}.0_pip{PIP0}_kl{KL_WEIGHT}.0_klbeta{KL_WEIGHT_BETA}.0_seed{TRAIN_SEED}",
+# 			'topics.csv')
+# 	threads: 4
+# 	output:
+# 		os.path.join(OUTPUT_DIR,
+# 			"NMI",
+# 			f"{DATA_ID}_" + "{noise}_{seed}.csv")
+# 	shell:
+# 		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.topics} {output}'
 
-rule concat_NMI:
-	input: 
-		expand(os.path.join(OUTPUT_DIR,
-			"NMI",
-			f"{DATA_ID}_" + "{noise}_{seed}.csv"), noise=NOISE_PARAMS, seed=SEED_PARAMS)
-	output:
-		os.path.join(OUTPUT_DIR, "NMI.csv")
-	params: 
-			dir = os.path.join(OUTPUT_DIR, "NMI"),
-	shell:
-		'cat {params.dir}/* > {output}'
+# rule concat_NMI:
+# 	input: 
+# 		expand(os.path.join(OUTPUT_DIR,
+# 			"NMI",
+# 			f"{DATA_ID}_" + "{noise}_{seed}.csv"), noise=NOISE_PARAMS, seed=SEED_PARAMS)
+# 	output:
+# 		os.path.join(OUTPUT_DIR, "NMI.csv")
+# 	params: 
+# 			dir = os.path.join(OUTPUT_DIR, "NMI"),
+# 	shell:
+# 		'cat {params.dir}/* > {output}'
