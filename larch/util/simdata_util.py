@@ -256,13 +256,13 @@ def sim_rho(N, bulk_file, out_dir, rho=0.1, seed=123):
     cell_type_cumsum = torch.cat((torch.tensor([0]), torch.cumsum(cell_type_counts, dim = 0)), dim = 0)
 
     D = torch.round(torch.exp(torch.randn((1,))) * G).int().item()
+    pi_0 = Dirichlet(torch.ones(G)).sample()
 
     X = pd.DataFrame(columns=genes, index=cell_id)
 
     for i, cell_type in enumerate(types):
         if cell_type_counts[i] == 0:
             continue
-        pi_0 = Dirichlet(torch.ones(G)).sample()
         pi_i = (1 - rho) * torch.tensor(pi_t.loc[:, cell_type]) + rho * pi_0
         X.loc[cell_id[cell_type_cumsum[i]:cell_type_cumsum[i+1]],:] = Multinomial(
             D, 

@@ -33,6 +33,8 @@ topic_factors <- factor(
 
 sc_data$max_topic <- topic_factors[apply(topics, 1, which.max)]
 
+print("Clustering...")
+
 reducedDim(sc_data, "topic_space") <- topics %>% select_if(is.numeric)
 
 PCA_clusters <- clusterCells(sc_data, use.dimred = "PCA", BLUSPARAM=NNGraphParam(cluster.fun="louvain"))
