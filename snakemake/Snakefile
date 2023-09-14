@@ -29,19 +29,14 @@ rule all:
 	input: 
 		os.path.join(OUTPUT_DIR, "NMI.csv")
 
-rule create_wildcards:
-	output: expand("rho{noise}_seed{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
-	shell:
-		"echo {output} > /dev/null"
+expand("{noise}_{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
 
 rule simulate_data: 
-	input:
-		"rho{noise}_seed{seed}"
 	output: 
 		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
 	threads: 8
 	run:
-		sim_rho(N, BULK_FILE, DATA_DIR, rho=noise_level, seed=seed_param)
+		sim_rho(N, BULK_FILE, DATA_DIR, rho=wildcards.noise, seed=wildcards.seed)
 
 rule run_tree_spike_slab:
 	input:
