@@ -29,7 +29,7 @@ DATA_ID = config["TREE_VAE_PARAMETERS"]["DATA_ID"]
 rule all:
 	input: 
 		expand(os.path.join(OUTPUT_DIR, 
-			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}.0_pip{PIP0}_kl{KL_WEIGHT}.0_klbeta{KL_WEIGHT_BETA}.0_seed{TRAIN_SEED}",
+			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
 			'topics.csv'), noise=NOISE_PARAMS, seed=SEED_PARAMS)
 
 expand("{noise}_{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
@@ -47,7 +47,7 @@ rule run_tree_spike_slab:
 	threads: 8
 	output: 
 		os.path.join(OUTPUT_DIR, 
-			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}.0_pip{PIP0}_kl{KL_WEIGHT}.0_klbeta{KL_WEIGHT_BETA}.0_seed{TRAIN_SEED}",
+			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
 			'topics.csv')
 	shell:
 		'tree_spike_slab ' 
