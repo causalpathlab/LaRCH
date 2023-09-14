@@ -32,7 +32,7 @@ rule all:
 rule create_wildcards:
 	output: expand("rho{noise}_seed{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
 	shell:
-		"cat {output} > /dev/null"
+		"cat /"{output}/" > /dev/null"
 
 rule simulate_data: 
 	input:
