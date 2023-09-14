@@ -29,7 +29,7 @@ rule all:
 	input: 
 		os.path.join(OUTPUT_DIR, "NMI.csv")
 
-rule make_directories:
+rule create_wildcards:
 	output: expand("rho{noise}_seed{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
 	shell:
 		"cat {output} > /dev/null"
