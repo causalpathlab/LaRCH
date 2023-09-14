@@ -29,13 +29,19 @@ rule all:
 	input: 
 		os.path.join(OUTPUT_DIR, "NMI.csv")
 
+rule make_directories:
+	output: expand("rho{noise}_seed{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
+	shell:
+		"cat {output} > /dev/null"
+
 rule simulate_data: 
+	input:
+		"rho{noise}_seed{seed}"
 	output: 
-		expand(os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad"), noise=NOISE_PARAMS, seed=SEED_PARAMS)
+		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
+	threads: 8
 	run:
-		for noise_level in NOISE_PARAMS:
-			for seed_param in SEED_PARAMS:
-				sim_rho(N, BULK_FILE, DATA_DIR, rho=noise_level, seed=seed_param)
+		sim_rho(N, BULK_FILE, DATA_DIR, rho=noise_level, seed=seed_param)
 
 rule run_tree_spike_slab:
 	input:
