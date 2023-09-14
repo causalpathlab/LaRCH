@@ -5,6 +5,7 @@ BULK_FILE = config["BULK_FILE"]
 DATA_DIR = config["DATA_DIR"]
 OUTPUT_DIR = config["OUTPUT_DIR"]
 LOG_DIR = config["LOG_DIR"]
+WORKING_DIR = config["WORKING_DIR"]
 
 NOISE_PARAMS = config["SIMULATION_PARAMETERS"]["NOISE"]
 SEED_PARAMS = config["SIMULATION_PARAMETERS"]["SEED"]
@@ -75,7 +76,7 @@ rule get_NMI:
 			"NMI",
 			f"{DATA_ID}_" + "{noise}_{seed}.csv")
 	shell:
-		'Rscript get_NMI.R {input.sc_data} {input.topics} {output}'
+		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.topics} {output}'
 
 rule concat_NMI:
 	input: 
