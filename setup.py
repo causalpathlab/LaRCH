@@ -12,6 +12,7 @@ setup(
         'tree_spike_slab = larch.run.tree_spike_slab:main',
         'tree_susie = larch.run.tree_susie:main',
         'sc_data_sim = larch.run.sim_real:main',
+        'sc_data_sim_rho = larch.run.sim_rho:main',
         'BALSAM = larch.run.flat_bayesian:main',
         'tree_BALSAM = larch.run.tree_bayesian:main']
     },

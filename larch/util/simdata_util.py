@@ -182,7 +182,8 @@ def sim_data_mult_unif(N, G, S, D_tree, gamma0=500, alpha0=5, dthet = False):
     return (X, A, anchor_gene_mat, theta, pi, beta, node_effect, rho, rho_raw, D, sample_name, gene_name, node_name, topic_name)
 
 
-def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
+def sim_real(N, bulk_file, out_dir, noise=5, seed=123):
+    outfile = os.path.join(out_dir, f"sim_real_N{N}_noise{noise}_seed{seed}.h5ad")
     if os.path.exists(outfile):
         print(f"simulated data file already exists, loading data from {outfile}")
         return ad.read_h5ad(outfile)
@@ -198,30 +199,86 @@ def sim_real(N, bulk_file, outfile, noise=5, seed = 123):
     types = bulk.columns
     n_types = bulk.shape[1]
 
-    cell_types = torch.randint(n_types, (N,))
-    cell_type_names = types[cell_types]
+    cell_type_dist = Dirichlet(torch.ones(n_types) * 50).sample()
+    cell_type_counts = Multinomial(N, cell_type_dist).sample().int()
+    cell_type_names = types[torch.arange(0, n_types).repeat_interleave(cell_type_counts)]
     cell_id = cell_type_names + "_" + list(map(str, range(N)))
+    cell_type_cumsum = torch.cat((torch.tensor([0]), torch.cumsum(cell_type_counts, dim = 0)), dim = 0)
 
-    D = torch.round(torch.exp(torch.randn((N,))) * G)
+    D = torch.round(torch.exp(torch.randn((1,))) * G).int().item()
 
-    X = pd.DataFrame(columns = genes, index = cell_id)
+    X = pd.DataFrame(columns=genes, index=cell_id)
 
-    for i in range(N):
-        cell_type = cell_types[i].item()
-        X.loc[cell_id[i]] = Multinomial(
-            round(D[i].item()), 
+    for i, cell_type in enumerate(types):
+        if cell_type_counts[i] == 0:
+            continue
+        X.loc[cell_id[cell_type_cumsum[i]:cell_type_cumsum[i+1]],:] = Multinomial(
+            D, 
             Dirichlet(
-                torch.tensor(bulk.loc[:, types[cell_type]] + noise)
+                torch.tensor(bulk.loc[:, cell_type]) + noise
             ).sample()
-        ).sample()
+        ).sample(torch.tensor([cell_type_counts[i]]))
 
     adata = ad.AnnData(X, dtype=np.float32)
 
     adata.obs = pd.DataFrame({
         "cell_type": cell_type_names,
         "read_depth": D
-    }, index = cell_id)
+    }, index=cell_id)
 
     print(f"saving simulated data to {outfile}")
     adata.write_h5ad(outfile)
     return adata
+
+def sim_rho(N, bulk_file, out_dir, rho=0.1, seed=123):
+    outfile = os.path.join(out_dir, f"sim_rho_N{N}_rho{rho}_seed{seed}.h5ad")
+    if os.path.exists(outfile):
+        print(f"simulated data file already exists, loading data from {outfile}")
+        return ad.read_h5ad(outfile)
+    print("Simulated data does not yet exist, generating simulated data")
+
+    torch.manual_seed(seed)
+
+    bulk = pd.read_csv(bulk_file)
+    bulk = bulk.set_index('gene')
+
+    pi_t = bulk / bulk.sum(axis=0)
+
+    genes = bulk.index
+    G = bulk.shape[0]
+    types = bulk.columns
+    n_types = bulk.shape[1]
+
+    cell_type_dist = Dirichlet(torch.ones(n_types) * 50).sample()
+    cell_type_counts = Multinomial(N, cell_type_dist).sample().int()
+    cell_type_names = types[torch.arange(0, n_types).repeat_interleave(cell_type_counts)]
+    cell_id = cell_type_names + "_" + list(map(str, range(N)))
+    cell_type_cumsum = torch.cat((torch.tensor([0]), torch.cumsum(cell_type_counts, dim = 0)), dim = 0)
+
+    D = torch.round(torch.exp(torch.randn((1,))) * G).int().item()
+
+    X = pd.DataFrame(columns=genes, index=cell_id)
+
+    for i, cell_type in enumerate(types):
+        if cell_type_counts[i] == 0:
+            continue
+        pi_0 = Dirichlet(torch.ones(G)).sample()
+        pi_i = (1 - rho) * torch.tensor(pi_t.loc[:, cell_type]) + rho * pi_0
+        X.loc[cell_id[cell_type_cumsum[i]:cell_type_cumsum[i+1]],:] = Multinomial(
+            D, 
+            pi_i
+        ).sample(torch.tensor([cell_type_counts[i]]))
+
+    adata = ad.AnnData(X, dtype=np.float32)
+
+    adata.obs = pd.DataFrame({
+        "cell_type": cell_type_names,
+        "read_depth": D
+    }, index=cell_id)
+
+    print(f"saving simulated data to {outfile}")
+    adata.write_h5ad(outfile)
+    return adata
+        
+
+
