@@ -47,3 +47,6 @@ def main():
         print(f"Model saved at:", os.path.join(args.out_dir, model_id))
     else:
         print("working correctly")
+
+if __name__ == "__main__":
+    main()
