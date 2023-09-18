@@ -3,7 +3,7 @@ import scanpy as sc
 import pandas as pd
 import argparse
 import torch
-import pickle
+import datetime
 from scipy.sparse import csr_matrix
 from larch.util.modelhub import TreeSpikeSlab
 from larch.util.util import setup_anndata
@@ -44,7 +44,14 @@ def main():
     topics_df = pd.DataFrame(test_theta, index=test_data.obs.index, columns=['topic_' + str(j) for j in range(test_theta.shape[1])])
     if not os.path.exists(args.out_dir):
         os.makedirs(args.out_dir)
-    topics_df.to_csv(os.path.join(args.out_dir, "topics.csv"))
+    if not os.path.join(args.out_dir, "topics.csv"):
+        outfile = os.path.join(args.out_dir, "topics.csv")
+    else:
+        now = datetime.datetime.now()
+        outfile = os.path.join(args.out_dir, now.strftime('%Y%m%d%H%M%S') + "_topics.csv")
+    topics_df.to_csv(outfile)
+    print("latent representation saved to ", outfile)
+
 
 if __name__ == "__main__":
     main()
