@@ -19,7 +19,14 @@ def main():
     bulk_file = args.bulk_file
     out_dir = args.out_dir
 
-    sim_real(N, bulk_file, out_dir, noise=noise, seed=seed)
+    outfile = os.path.join(out_dir, f"sim_rho_N{N}_rho{rho}_seed{seed}.h5ad")
+    if os.path.exists(outfile):
+        print("simulated data already exists at {outfile}")
+    else:
+        adata = sim_real(N, bulk_file, out_dir, noise=noise, seed=seed)
+
+        print(f"saving simulated data to {outfile}")
+        adata.write_h5ad(outfile)
 
 if __name__ == "__main__":
     main()

@@ -182,8 +182,7 @@ def sim_data_mult_unif(N, G, S, D_tree, gamma0=500, alpha0=5, dthet = False):
     return (X, A, anchor_gene_mat, theta, pi, beta, node_effect, rho, rho_raw, D, sample_name, gene_name, node_name, topic_name)
 
 
-def sim_real(N, bulk_file, out_dir, noise=5, seed=123):
-    outfile = os.path.join(out_dir, f"sim_real_N{N}_noise{noise}_seed{seed}.h5ad")
+def sim_real(N, bulk_file, outfile, noise=5, seed=123):
     if os.path.exists(outfile):
         print(f"simulated data file already exists, loading data from {outfile}")
         return ad.read_h5ad(outfile)
@@ -225,13 +224,9 @@ def sim_real(N, bulk_file, out_dir, noise=5, seed=123):
         "cell_type": cell_type_names,
         "read_depth": D
     }, index=cell_id)
-
-    print(f"saving simulated data to {outfile}")
-    adata.write_h5ad(outfile)
     return adata
 
-def sim_rho(N, bulk_file, out_dir, rho=0.1, seed=123):
-    outfile = os.path.join(out_dir, f"sim_rho_N{N}_rho{rho}_seed{seed}.h5ad")
+def sim_rho(N, bulk_file, outfile, rho=0.1, seed=123):
     if os.path.exists(outfile):
         print(f"simulated data file already exists, loading data from {outfile}")
         return ad.read_h5ad(outfile)
@@ -275,9 +270,6 @@ def sim_rho(N, bulk_file, out_dir, rho=0.1, seed=123):
         "cell_type": cell_type_names,
         "read_depth": D
     }, index=cell_id)
-
-    print(f"saving simulated data to {outfile}")
-    adata.write_h5ad(outfile)
     return adata
         
 

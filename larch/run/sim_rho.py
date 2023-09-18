@@ -14,12 +14,19 @@ def main():
     print(args)
 
     N = args.N
-    noise = args.noise
+    rho = args.noise
     seed = args.seed
     bulk_file = args.bulk_file
     out_dir = args.out_dir
 
-    sim_rho(N, bulk_file, out_dir, rho=noise, seed=seed)
+    outfile = os.path.join(out_dir, f"sim_rho_N{N}_rho{rho}_seed{seed}.h5ad")
+    if os.path.exists(outfile):
+        print("simulated data already exists at {outfile}")
+    else:
+        adata = sim_rho(N, bulk_file, outfile, rho=noise, seed=seed)
+
+        print(f"saving simulated data to {outfile}")
+        adata.write_h5ad(outfile)
 
 if __name__ == "__main__":
     main()
