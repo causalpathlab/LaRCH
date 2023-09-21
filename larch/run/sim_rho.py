@@ -23,7 +23,7 @@ def main():
     if os.path.exists(outfile):
         print("simulated data already exists at {outfile}")
     else:
-        adata = sim_rho(N, bulk_file, outfile, rho=noise, seed=seed)
+        adata = sim_rho(N, bulk_file, outfile, rho=rho, seed=seed)
 
         print(f"saving simulated data to {outfile}")
         adata.write_h5ad(outfile)
