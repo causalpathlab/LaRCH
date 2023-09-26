@@ -36,10 +36,14 @@ rule simulate_data:
 	output: 
 		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
 	threads: 2
-	run:
-		adata = sim_rho(N, BULK_FILE, output, rho=float(wildcards.noise), seed=int(wildcards.seed))
-		adata.write_h5ad(output)
-		
+	shell:
+		'sc_data_sim_rho '
+		'--N {N} '
+		'--noise {wildcards.noise} '
+		'--seed {wildcards.seed} '
+		'--bulk_file {BULK_FILE} '
+		'--out_dir {DATA_DIR}'
+
 rule run_tree_spike_slab:
 	input:
 		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
