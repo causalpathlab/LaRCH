@@ -226,7 +226,7 @@ def sim_real(N, bulk_file, outfile, noise=5, seed=123):
     }, index=cell_id)
     return adata
 
-def sim_rho(N, bulk_file, outfile, rho=0.1, seed=123):
+def sim_rho(N, bulk_file, outfile, D=None, rho=0.1, seed=123):
     if os.path.exists(outfile):
         print(f"simulated data file already exists, loading data from {outfile}")
         return ad.read_h5ad(outfile)
@@ -250,7 +250,8 @@ def sim_rho(N, bulk_file, outfile, rho=0.1, seed=123):
     cell_id = cell_type_names + "_" + list(map(str, range(N)))
     cell_type_cumsum = torch.cat((torch.tensor([0]), torch.cumsum(cell_type_counts, dim = 0)), dim = 0)
 
-    D = torch.round(torch.exp(torch.randn((1,))) * G).int().item()
+    if not D:
+        D = torch.round(torch.exp(torch.randn((1,))) * G).int().item()
     pi_0 = Dirichlet(torch.ones(G)).sample()
 
     X = pd.DataFrame(columns=genes, index=cell_id)

@@ -11,6 +11,7 @@ NOISE_PARAMS = config["SIMULATION_PARAMETERS"]["NOISE"]
 SEED_PARAMS = config["SIMULATION_PARAMETERS"]["SEED"]
 
 N = config["SIMULATION_PARAMETERS"]["N"]
+READ_DEPTH = config["SIMULATION_PARAMETERS"]["D"]
 
 TREE_DEPTH = config["TREE_VAE_PARAMETERS"]["TREE_DEPTH"]
 EPOCHS = config["TREE_VAE_PARAMETERS"]["EPOCHS"]
@@ -39,6 +40,7 @@ rule simulate_data:
 	shell:
 		'sc_data_sim_rho '
 		'--N {N} '
+		'--depth {READ_DEPTH}'
 		'--noise {wildcards.noise} '
 		'--seed {wildcards.seed} '
 		'--bulk_file {BULK_FILE} '

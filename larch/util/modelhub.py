@@ -153,6 +153,38 @@ class BaseModel(BaseModelClass):
 
         return latent_z
 
+    def get_node_dot(
+            self,
+            adata: AnnData = None,
+            batch_size: int = 128) -> List[np.ndarray]:
+        """
+        Return the dot product of beta and X to give cell x node correlation
+        Parameters
+        ----------
+        adata
+            Annotation Data
+        batch_size
+            Minibatch size for data loading into model
+        """
+        if adata is None:
+            adata = self.adata
+
+        scdl = self._make_data_loader(adata, batch_size=batch_size)
+        self.module.eval()
+
+        decoder = self.module.decoder
+        beta = decoder.slab_mean * decoder.spike_logit
+
+        node_dot = []
+        for tensor in scdl:
+            (sample_batch) = torch.transpose(_unpack_tensors(tensor), 0, 1)
+
+            batch_dot = torch.matmul(beta, sample_batch)
+
+            node_dot.append(batch_dot)
+
+        return node_dot
+
     def save(
             self,
             dir_path: str,
@@ -375,6 +407,7 @@ class TreeSpikeSlab(BaseModel):
             "tree_spike_slab with the following params: "
             + "\n n_genes: {}, tree_depth: {}"
         ).format(self.adata.n_vars, self.tree_depth)
+
 
 class FullTreeSpikeSlab(BaseModel):
     """
