@@ -40,7 +40,7 @@ rule simulate_data:
 	shell:
 		'sc_data_sim_rho '
 		'--N {N} '
-		'--depth {READ_DEPTH}'
+		'--depth {READ_DEPTH} '
 		'--noise {wildcards.noise} '
 		'--seed {wildcards.seed} '
 		'--bulk_file {BULK_FILE} '
