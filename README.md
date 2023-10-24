@@ -1,4 +1,4 @@
-# SuSiEVAE
+# LaRCH (LAtent Representaton of Cellular Hierarchies)
 
 ## Data
 - [X] Simulation
