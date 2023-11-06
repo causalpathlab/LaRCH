@@ -142,3 +142,16 @@ models/230206/*
 models/230206_more_genes/*
 !models/230206_more_genes/20230206_dense.html
 !models/230206_more_genes/20230206_sparse.html
+.Rproj.user
+models/
+misc/
+*.RDa
+*.h5ad
+*.h5ad.gz
+*.Rmd
+*.md
+*.png
+
+*_old*
+
+data/

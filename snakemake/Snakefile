@@ -1,0 +1,98 @@
+import os
+from larch.util.simdata_util import sim_rho
+
+BULK_FILE = config["BULK_FILE"]
+DATA_DIR = config["DATA_DIR"]
+OUTPUT_DIR = config["OUTPUT_DIR"]
+LOG_DIR = config["LOG_DIR"]
+WORKING_DIR = config["WORKING_DIR"]
+
+NOISE_PARAMS = config["SIMULATION_PARAMETERS"]["NOISE"]
+SEED_PARAMS = config["SIMULATION_PARAMETERS"]["SEED"]
+
+N = config["SIMULATION_PARAMETERS"]["N"]
+READ_DEPTH = config["SIMULATION_PARAMETERS"]["D"]
+
+TREE_DEPTH = config["TREE_VAE_PARAMETERS"]["TREE_DEPTH"]
+EPOCHS = config["TREE_VAE_PARAMETERS"]["EPOCHS"]
+LR = config["TREE_VAE_PARAMETERS"]["LR"]
+BS = config["TREE_VAE_PARAMETERS"]["BS"]
+PIP0 = config["TREE_VAE_PARAMETERS"]["PIP0"]
+KL_WEIGHT = config["TREE_VAE_PARAMETERS"]["KL_WEIGHT"]
+KL_WEIGHT_BETA = config["TREE_VAE_PARAMETERS"]["KL_WEIGHT_BETA"]
+A0 = config["TREE_VAE_PARAMETERS"]["A0"]
+TRAIN_SIZE = config["TREE_VAE_PARAMETERS"]["TRAIN_SIZE"]
+TRAIN_SEED = config["TREE_VAE_PARAMETERS"]["SEED"]
+USE_GPU = config["TREE_VAE_PARAMETERS"]["USE_GPU"]
+CHECK_VAL_EVERY_N_EPOCH = config["TREE_VAE_PARAMETERS"]["CHECK_VAL_EVERY_N_EPOCH"]
+DATA_ID = config["TREE_VAE_PARAMETERS"]["DATA_ID"]
+
+rule all:
+	input: 
+		os.path.join(OUTPUT_DIR, "NMI.csv")
+
+expand("{noise}_{seed}", noise=NOISE_PARAMS, seed=SEED_PARAMS)
+
+rule simulate_data: 
+	output: 
+		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
+	threads: 2
+	shell:
+		'sc_data_sim_rho '
+		'--N {N} '
+		'--depth {READ_DEPTH} '
+		'--noise {wildcards.noise} '
+		'--seed {wildcards.seed} '
+		'--bulk_file {BULK_FILE} '
+		'--out_dir {DATA_DIR}'
+
+rule run_tree_spike_slab:
+	input:
+		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
+	threads: 8
+	output: 
+		os.path.join(OUTPUT_DIR, 
+			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
+			'topics.csv')
+	shell:
+		'tree_spike_slab ' 
+			'--tree_depth {TREE_DEPTH} '
+			'--EPOCHS {EPOCHS} '
+			'--lr {LR} '
+			'--bs {BS} '
+			'--pip0 {PIP0} '
+			'--kl_weight {KL_WEIGHT} '
+			'--kl_weight_beta {KL_WEIGHT_BETA} '
+			'--a0 {A0} '
+			'--train_size {TRAIN_SIZE} '
+			'--seed {TRAIN_SEED} '
+			'--data_file {input} '
+			'--data_id {DATA_ID}_{wildcards.noise}_{wildcards.seed} '
+			'--out_dir {OUTPUT_DIR} '
+			'--log_dir {LOG_DIR}'
+
+rule get_NMI:
+	input:     
+		sc_data = os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad"),
+		topics = os.path.join(OUTPUT_DIR, 
+			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
+			'topics.csv')
+	threads: 4
+	output:
+		os.path.join(OUTPUT_DIR,
+			"NMI",
+			f"{DATA_ID}_" + "{noise}_{seed}.csv")
+	shell:
+		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.topics} {output}'
+
+rule concat_NMI:
+	input: 
+		expand(os.path.join(OUTPUT_DIR,
+			"NMI",
+			f"{DATA_ID}_" + "{noise}_{seed}.csv"), noise=NOISE_PARAMS, seed=SEED_PARAMS)
+	output:
+		os.path.join(OUTPUT_DIR, "NMI.csv")
+	params: 
+			dir = os.path.join(OUTPUT_DIR, "NMI"),
+	shell:
+		'cat {params.dir}/* > {output}'
