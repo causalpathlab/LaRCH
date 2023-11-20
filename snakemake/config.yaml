@@ -2,7 +2,7 @@ BULK_FILE: /data/pye/LaRCH/data/mean_tpm_merged.csv
 DATA_DIR: /data/pye/LaRCH/data/sim_data_trial/oct
 OUTPUT_DIR: /data/pye/LaRCH/models/sim_data_trial/oct
 LOG_DIR: /data/pye/LaRCH/logs
-WORKING_DIR: /home/BCCRC.CA/pye/projects/SuSiEVAE
+WORKING_DIR: /home/BCCRC.CA/pye/projects/LaRCH
 
 SIMULATION_PARAMETERS:
   N: 2000

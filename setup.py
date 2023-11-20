@@ -6,7 +6,7 @@ setup(
     packages=find_packages(),
     version='0.0.1',
     description="LaRCH package, Latent Representation of Cellular Hierarchies. Tree-structured topic modelling",
-    url="https://github.com/causalpathlab/SuSiEVAE",
+    url="https://github.com/causalpathlab/LaRCH",
     entry_points={'console_scripts':
         ['spike_slab = larch.run.spike_slab:main',
         'tree_spike_slab = larch.run.tree_spike_slab:main',
