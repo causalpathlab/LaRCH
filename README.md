@@ -22,7 +22,7 @@ python setup.py install
 
 ## Run
 
-### Spike and Slab model
+### Spike and Slab model (BALSAM)
 
 ```
 spike_slab [-h] [--nLV NLV] [--EPOCHS EPOCHS] [--lr LR] [--bs BS] [--train_size TRAIN_SIZE]
@@ -85,4 +85,36 @@ usage: tree_spike_slab [-h] [--tree_depth TREE_DEPTH] [--EPOCHS EPOCHS] [--lr LR
 --out_dir OUT_DIR     directory for output files
 ```
 
+## Data Simulaation
 
+```
+usage: sc_data_sim_rho [-h] [--N N] [--noise NOISE] [--depth DEPTH] [--seed SEED] [--bulk_file BULK_FILE] [--out_dir OUT_DIR]
+```
+
+```
+-h, --help            show this help message and exit
+--N N                 Number of cells
+--noise NOISE         Noise parameter
+--depth DEPTH         Read Depth
+--seed SEED           seed
+--bulk_file BULK_FILE
+                      filepath to bulk expression file
+--out_dir OUT_DIR     output directory for simulated data
+```
+
+## Run Inference Only
+```
+usage: run_inference [-h] [--model_file MODEL_FILE] [--use_gpu USE_GPU] [--tree_depth TREE_DEPTH] [--test_data_file TEST_DATA_FILE] [--out_dir OUT_DIR]
+```
+
+```
+-h, --help            show this help message and exit
+--model_file MODEL_FILE
+                      path to model file
+--use_gpu USE_GPU     which GPU to use
+--tree_depth TREE_DEPTH
+                      Depth of tree model (optional)
+--test_data_file TEST_DATA_FILE
+                      path to data file to perform inference on
+--out_dir OUT_DIR     path to save output file
+  ```

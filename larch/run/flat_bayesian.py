@@ -36,7 +36,7 @@ def main():
     args = parser.parse_args()
     print(args)
 
-    model_id = f"BALSAM_{args.data_id}_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
+    model_id = f"flat_bayesian_{args.data_id}_ep{args.EPOCHS}_nlv{args.nLV}_bs{args.bs}_lr{args.lr}_train_size{args.train_size}_kl{args.kl_weight}_klbeta{args.kl_weight_beta}_seed{args.seed}"
     print(model_id)
 
     if os.path.exists(os.path.join(args.out_dir, model_id)):
