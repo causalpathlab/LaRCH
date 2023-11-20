@@ -22,6 +22,7 @@ sc_data <- readH5AD(sc_data_file)
 
 sc_data <- logNormCounts(sc_data, assay.type = "X")
 sc_data <- runPCA(sc_data)
+sc_data <- runUMAP(sc_data)
 
 topics <- fread(topics_file) %>%
   remove_rownames() %>% column_to_rownames("V1")
@@ -40,14 +41,19 @@ reducedDim(sc_data, "topic_space") <- topics %>% select_if(is.numeric)
 PCA_clusters <- clusterCells(sc_data, use.dimred = "PCA", BLUSPARAM=NNGraphParam(cluster.fun="louvain"))
 sc_data$PCA_clusters <- PCA_clusters
 
+UMAP_clusters <- clusterCells(sc_data, use.dimred = "UMAP", BLUSPARAM=NNGraphParam(cluster.fun="louvain"))
+sc_data$UMAP_clusters <- UMAP_clusters
+
 z_clusters <- clusterCells(sc_data, use.dimred = "topic_space", BLUSPARAM=NNGraphParam(cluster.fun="louvain"))
 sc_data$z_clusters <- z_clusters
 
 NMI_df <- data.frame(
-  labels = c("max_topic", "LaRCH Cluster", "PCA Cluster"), 
+  labels = c("max_topic", "LaRCH Cluster", "PCA Cluster", "UMAP Cluster"), 
   NMI = c(NMI(sc_data$cell_type, sc_data$max_topic),
           NMI(sc_data$cell_type, sc_data$z_clusters), 
-          NMI(sc_data$cell_type, sc_data$PCA_clusters))
+          NMI(sc_data$cell_type, sc_data$PCA_clusters),
+          NMI(sc_data$cell_type, sc_data$UMAP_clusters)
+          )
 )
 
 NMI_df$noise <- noise
