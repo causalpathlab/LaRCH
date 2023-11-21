@@ -79,7 +79,7 @@ def main():
     # spike, slab, standard deviation
         print("---Saving global parameters: spike, slab, standard deviation---\n")
         model.get_parameters(save_dir=os.path.join(args.out_dir, model_id), overwrite=False)
-        topics_np = model.get_latent_representation(deterministic=True, output_softmax_z=True)
+        topics_np = model.get_latent_representation(deterministic=True, output_softmax_z=False)
         # topic proportions (after softmax)
         print("---Saving topic proportions (after softmax)---\n")
         topics_df = pd.DataFrame(topics_np, index=model.adata.obs.index, columns=['topic_' + str(j) for j in range(topics_np.shape[1])])

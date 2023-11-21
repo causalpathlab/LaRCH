@@ -750,43 +750,6 @@ class FullTreeSpikeSlabDecoder(TreeSpikeSlabDecoder):
             tree_util.pbt_full_adj(self.tree_depth).to_dense(), requires_grad=False
         )
 
-class TreeRelaxThetaDecoder(TreeSpikeSlabDecoder):
-    def __init__(
-            self,
-            n_output: int,
-            pip0=0.1,
-            v0=1,
-            tree_depth=3,):
-        super().__init__(
-            n_output=n_output,
-            pip0=pip0,
-            v0=v0,
-            tree_depth=tree_depth
-        )
-
-    def forward(
-            self,
-            z: torch.Tensor):
-        theta = self.safe_exp(z, x_min=-5, x_max=5)
-
-        beta = self.get_beta(
-            self.spike_logit,
-            self.slab_mean,
-            self.slab_lnvar,
-            self.bias_d
-        )
-
-        topic_beta = torch.mm(self.A, self.safe_exp(beta))
-
-        aa = torch.mm(theta, topic_beta)
-
-        beta_kl = self.sparse_kl_loss(
-            self.logit_0, self.lnvar_0,
-            self.spike_logit, self.slab_mean, self.slab_lnvar
-        )
-
-        return beta, beta_kl, theta, aa
-
 class StandardBetaDecoder(TreeSpikeSlabDecoder):
     def __init__(
             self, 
