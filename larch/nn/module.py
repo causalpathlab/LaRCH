@@ -14,7 +14,6 @@ from larch.nn.base_components import (
     TreeStickSlabDecoder, 
     SuSiEDecoder, 
     SoftmaxSpikeSlabTreeDecoder, 
-    TreeRelaxThetaDecoder,
     StandardBetaDecoder,
     FullTreeSpikeSlabDecoder
 )
