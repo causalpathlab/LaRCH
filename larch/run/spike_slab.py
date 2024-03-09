@@ -43,7 +43,7 @@ def main():
     print(model_id)
 
     # check if the model already exists
-    if os.path.exists(os.path.join(args.out_dir, model_id)):
+    if os.path.exists(os.path.join(args.out_dir, model_id, "topics.csv")):
         print("Model already exists, skip training")
         print(f"Model saved at:", os.path.join(args.out_dir, model_id))
     else:
