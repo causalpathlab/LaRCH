@@ -71,11 +71,39 @@ rule run_tree_spike_slab:
 			'--out_dir {OUTPUT_DIR} '
 			'--log_dir {LOG_DIR}'
 
+rule run_BALSAM:
+	input:
+		os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad")
+	threads: 8
+	output: 
+		os.path.join(OUTPUT_DIR, 
+			f"spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_nlv16_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
+			'topics.csv')
+	shell:
+		'spike_slab ' 
+			'--nLV 16 '
+			'--EPOCHS {EPOCHS} '
+			'--lr {LR} '
+			'--bs {BS} '
+			'--pip0 {PIP0} '
+			'--kl_weight {KL_WEIGHT} '
+			'--kl_weight_beta {KL_WEIGHT_BETA} '
+			'--a0 {A0} '
+			'--train_size {TRAIN_SIZE} '
+			'--seed {TRAIN_SEED} '
+			'--data_file {input} '
+			'--data_id {DATA_ID}_{wildcards.noise}_{wildcards.seed} '
+			'--out_dir {OUTPUT_DIR} '
+			'--log_dir {LOG_DIR}'
+
 rule get_NMI:
 	input:     
 		sc_data = os.path.join(DATA_DIR, f"sim_rho_N{N}_" + "rho{noise}_seed{seed}.h5ad"),
-		topics = os.path.join(OUTPUT_DIR, 
+		tree_topics = os.path.join(OUTPUT_DIR, 
 			f"tree_spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_treeD{TREE_DEPTH}_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
+			'topics.csv')
+		BALSAM_topics = os.path.join(OUTPUT_DIR, 
+			f"spike_slab_{DATA_ID}_" + "{noise}_{seed}" + f"_ep{EPOCHS}_nlv16_bs{BS}_lr{LR}_train_size{TRAIN_SIZE}_pip{PIP0}_kl{KL_WEIGHT}_klbeta{KL_WEIGHT_BETA}_seed{TRAIN_SEED}",
 			'topics.csv')
 	threads: 4
 	output:
@@ -83,7 +111,7 @@ rule get_NMI:
 			"NMI",
 			f"{DATA_ID}_" + "{noise}_{seed}.csv")
 	shell:
-		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.topics} {output}'
+		'Rscript {WORKING_DIR}/snakemake/scripts/get_NMI.R {input.sc_data} {input.tree_topics} {input.BALSAM_topics} {output}'
 
 rule concat_NMI:
 	input: 
