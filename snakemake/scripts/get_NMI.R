@@ -25,7 +25,7 @@ sc_data <- logNormCounts(sc_data, assay.type = "X")
 sc_data <- runPCA(sc_data)
 sc_data <- runUMAP(sc_data)
 
-tree_topics <- fread(topics_file) %>%
+tree_topics <- fread(tree_topics_file) %>%
   remove_rownames() %>% column_to_rownames("V1")
 
 BALSAM_topics <- fread(BALSAM_topics_file) %>% 
